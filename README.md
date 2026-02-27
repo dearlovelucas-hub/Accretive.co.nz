@@ -1,0 +1,169 @@
+# Accretive Marketing Web App
+
+Production-ready marketing site for Accretive built with Next.js App Router, TypeScript, and Tailwind CSS.
+
+## Stack
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- `next/font` with Inter (primary) and serif accent for wordmark
+
+## Routes
+
+- `/` Home
+- `/request-demo`
+- `/our-product`
+- `/login`
+- `/dashboard/*` (authenticated client workspace)
+
+## Backend (MVP)
+
+Route handlers are implemented with Next.js App Router APIs:
+
+- `POST /api/demo-requests` validates and stores demo requests in Postgres
+- `GET /api/demo-requests` lists persisted demo requests
+- `POST /api/draft-jobs` accepts `multipart/form-data` (template, transaction docs, deal info) and starts a generation job
+- `GET /api/draft-jobs/:jobId` returns job status/progress
+- `GET /api/draft-jobs/:jobId/result` returns generated text result with server-side subscription gating
+- `GET /api/draft-jobs/:jobId/download` returns full `.docx` only for active subscriptions
+- `GET /api/draft-jobs/:jobId/trace` returns per-job review trace (prompt metadata + step outputs)
+- `GET /api/documents` returns current user's generated draft jobs for dashboard documents
+- `GET /api/documents/:documentId` returns a single visible document (owner/member or org-admin policy)
+- `GET /api/documents/:documentId/download` downloads a visible generated document
+- `GET /api/templates` returns current user's template list
+- `POST /api/templates` uploads/creates a template record for current user
+- `POST /api/auth/login` signs a user in and sets an HTTP-only session cookie
+- `GET /api/auth/me` returns the current authenticated session state
+- `POST /api/auth/logout` clears session cookie
+- `POST /api/billing/create-checkout-session` creates billing checkout URL (stub or provider integration point)
+- `POST /api/billing/webhook` updates subscription state from billing events
+
+## Paywall Behavior
+
+- Active subscription: full generated draft output + DOCX download enabled.
+- No active subscription: preview-only output is returned (`isPaywalled: true`) and full output is never returned by API.
+- All gating is enforced server-side in result/download endpoints (client cannot bypass).
+- Draft generation requires at least one transaction document server-side; optional term sheet is supported.
+
+Entitlement helper:
+
+- `getEntitlement(userId) -> { active, plan, expiresAt? }` in `lib/server/subscriptions.ts`
+
+Demo login account:
+
+- Username: `Lucas`
+- Password: `accretive123`
+
+## Run locally
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create local databases (one-time):
+
+```bash
+createdb accretive_dev
+createdb accretive_test
+```
+
+3. Run migrations:
+
+```bash
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/accretive_dev npm run db:migrate
+```
+
+4. Start development server:
+
+```bash
+npm run dev
+```
+
+5. Open:
+
+```text
+http://localhost:3000
+```
+
+6. Run tests:
+
+```bash
+DATABASE_URL_TEST=postgres://postgres:postgres@localhost:5432/accretive_test npm run test
+```
+
+Or if `DATABASE_URL_TEST` is already in your environment:
+
+```bash
+npm run test
+```
+
+## Build for production
+
+```bash
+npm run build
+npm run start
+```
+
+## Deploy to Vercel
+
+1. Push this project to GitHub.
+2. In Vercel, click **Add New Project** and import the repository.
+3. Keep default framework settings (Next.js).
+4. Click **Deploy**.
+
+## Connect `accretive.co.nz` from GoDaddy to Vercel
+
+1. In Vercel project settings, go to **Domains** and add `accretive.co.nz` and `www.accretive.co.nz`.
+2. In GoDaddy DNS, create/update records:
+   - `A` record for `@` pointing to `76.76.21.21`
+   - `CNAME` record for `www` pointing to `cname.vercel-dns.com`
+3. Remove conflicting old records for `@` and `www`.
+4. Wait for DNS propagation, then verify domains in Vercel.
+
+## Notes
+
+- Demo request form now submits to `POST /api/demo-requests`.
+- Upload demo on `/our-product` now creates and polls a real backend draft job.
+- Logged-in users access the app workspace at `/dashboard/*`.
+
+## Billing Setup (Stub + Provider Hook Points)
+
+Environment variables are documented in `.env.example`:
+
+- `DATABASE_URL`
+- `DATABASE_URL_TEST`
+- `SESSION_SECRET`
+- `ANTHROPIC_API_KEY`
+- `CLAUDE_MODEL`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `BILLING_WEBHOOK_SECRET`
+- `BILLING_STUB_AUTO_ACTIVATE`
+- `NEXT_PUBLIC_APP_URL`
+- `ACCRETIVE_DB_SCHEMA` (optional, useful for test isolation)
+
+LLM generation:
+
+- Draft generation now uses Claude via `@anthropic-ai/sdk` in `lib/server/llmDrafting.ts`.
+- If `ANTHROPIC_API_KEY` is missing, the backend returns a deterministic fallback draft instead of live LLM output.
+- Dashboard Drafting now shows a review trace panel (context, required fields, missing questions, final draft step with paywall-aware locking).
+
+Local webhook test example:
+
+```bash
+curl -X POST http://localhost:3000/api/billing/webhook \
+  -H "Content-Type: application/json" \
+  -H "x-billing-signature: $BILLING_WEBHOOK_SECRET" \
+  -d '{"type":"checkout.session.completed","data":{"userId":"user_lucas","plan":"pro"}}'
+```
+
+Migrations:
+
+- `db/migrations/0001_create_subscriptions.sql`
+- `db/migrations/0002_create_core_tables.sql`
+- `db/migrations/0003_matters_pipeline.sql`
+- `db/migrations/0004_multi_tenant_documents.sql`
+- Runner: `npm run db:migrate`
