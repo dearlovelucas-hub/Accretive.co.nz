@@ -94,29 +94,31 @@ export default function DemoRequestForm() {
 
     try {
       setIsSubmitting(true);
-      const response = await fetch("/api/demo-requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(form)
-      });
 
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { error?: string } | null;
-        setSubmitError(body?.error ?? "Unable to submit request right now.");
-        return;
-      }
+      const lines = [
+        `Full name: ${form.fullName}`,
+        `Work email: ${form.email}`,
+        `Organisation: ${form.organisation}`,
+        `Role: ${form.role || "-"}`,
+        `Practice area: ${form.practiceAreas.join(", ") || "-"}`,
+        `Firm size: ${form.firmSize || "-"}`,
+        `Document types: ${form.docTypes || "-"}`,
+        `Current process: ${form.currentProcess || "-"}`,
+        `Security requirements: ${form.securityRequirements.join(", ") || "-"}`,
+        `Notes: ${form.notes || "-"}`
+      ];
 
-      console.log("Demo request payload", form);
-      // TODO: replace this endpoint call with CRM integration once backend is productionized.
+      const mailto = `mailto:lucas@accretive.co.nz?subject=${encodeURIComponent(
+        "Accretive demo request"
+      )}&body=${encodeURIComponent(lines.join("\n"))}`;
 
-      setSuccessMessage("Thanks, your request has been submitted. We will contact you shortly.");
-      setToastMessage("Demo request sent successfully.");
+      window.location.href = mailto;
+      setSuccessMessage("Your email draft has been prepared. Please send it to complete your demo request.");
+      setToastMessage("Demo request email prepared.");
       setForm(initialState);
       window.setTimeout(() => setToastMessage(""), 3200);
     } catch {
-      setSubmitError("Network error. Please try again.");
+      setSubmitError("Unable to open your email app. Please contact lucas@accretive.co.nz directly.");
     } finally {
       setIsSubmitting(false);
     }
