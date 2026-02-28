@@ -54,6 +54,27 @@ export async function execute(text: string, params: readonly unknown[] = []): Pr
   return result.rowCount ?? 0;
 }
 
+/**
+ * Run `fn` inside a transaction with the document session context set.
+ * All queries against the documents table must execute within this wrapper so
+ * that PostgreSQL RLS policies (and the explicit WHERE guards in repo queries)
+ * restrict rows to the authenticated user's own documents.
+ *
+ * The SET LOCAL calls are transaction-scoped and reset automatically on COMMIT
+ * or ROLLBACK, so the context never leaks across pool connections.
+ */
+export async function withDocumentSession<T>(
+  userId: string,
+  orgId: string,
+  fn: (client: import("pg").PoolClient) => Promise<T>
+): Promise<T> {
+  return withTransaction(async (client) => {
+    await client.query("SET LOCAL app.user_id = $1", [userId]);
+    await client.query("SET LOCAL app.org_id = $1", [orgId]);
+    return fn(client);
+  });
+}
+
 export async function withTransaction<T>(fn: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
   const pool = await getPool();
   const client = await pool.connect();

@@ -28,6 +28,13 @@ export default function DraftingWorkspace() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const intervalRef = useRef<number | null>(null);
 
+  function clearPollingInterval() {
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }
+
   const canGenerate = useMemo(
     () => Boolean(templateFile && transactionDocs.length > 0) && stage !== "processing",
     [templateFile, transactionDocs.length, stage]
@@ -35,7 +42,7 @@ export default function DraftingWorkspace() {
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) window.clearInterval(intervalRef.current);
+      clearPollingInterval();
     };
   }, []);
 
@@ -68,6 +75,7 @@ export default function DraftingWorkspace() {
   }
 
   async function pollStatus(nextJobId: string) {
+    clearPollingInterval();
     intervalRef.current = window.setInterval(async () => {
       try {
         const response = await fetch(`/api/draft-jobs/${nextJobId}`);
@@ -80,28 +88,19 @@ export default function DraftingWorkspace() {
         setProgress(body.progress);
         if (body.status === "complete") {
           setStage("complete");
-          if (intervalRef.current) {
-            window.clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
+          clearPollingInterval();
           await fetchDraftResult(nextJobId);
         }
 
         if (body.status === "failed") {
           setError(body.errorMessage ?? "Draft generation failed.");
           setStage("idle");
-          if (intervalRef.current) {
-            window.clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
+          clearPollingInterval();
         }
       } catch (error) {
         setError(error instanceof Error ? error.message : "Could not retrieve job status.");
         setStage("idle");
-        if (intervalRef.current) {
-          window.clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
+        clearPollingInterval();
       }
     }, 700);
   }
@@ -158,8 +157,8 @@ export default function DraftingWorkspace() {
 
       if (!response.ok) {
         const fallback = "Unable to download the draft right now.";
-        const text = await response.text().catch(() => fallback);
-        throw new Error(text || fallback);
+        const maybeJson = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(maybeJson?.error ?? fallback);
       }
 
       const blob = await response.blob();

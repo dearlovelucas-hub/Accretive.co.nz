@@ -7,7 +7,7 @@ Production-ready marketing site for Accretive built with Next.js App Router, Typ
 - Next.js (App Router)
 - TypeScript
 - Tailwind CSS
-- `next/font` with Inter (primary) and serif accent for wordmark
+- `next/font` with Cormorant Garamond for primary typography and wordmark
 
 ## Routes
 
@@ -166,5 +166,11 @@ Migrations:
 - `db/migrations/0002_create_core_tables.sql`
 - `db/migrations/0003_matters_pipeline.sql`
 - `db/migrations/0004_multi_tenant_documents.sql`
+- `db/migrations/0005_rls_document_isolation.sql`
 - Runner: `npm run db:migrate`
+
+Document isolation:
+
+- Document table access is restricted by PostgreSQL RLS policies in migration `0005`.
+- Document queries should run through `withDocumentSession(userId, orgId, fn)` in `src/server/db/index.ts`.
 # Accretive

@@ -1,5 +1,8 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import UploadDemo from "@/components/UploadDemo";
+import { getAuthCookieName, parseSessionToken } from "@/lib/server/auth";
 
 const workflowSteps = [
   "Identify context from transaction documents and supplied deal facts.",
@@ -16,6 +19,14 @@ const securityBullets = [
 ];
 
 export default async function ProductPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(getAuthCookieName())?.value;
+  const session = parseSessionToken(token);
+
+  if (session) {
+    redirect("/dashboard/drafting");
+  }
+
   return (
     <Container className="space-y-16 py-16">
       <section className="max-w-4xl">
