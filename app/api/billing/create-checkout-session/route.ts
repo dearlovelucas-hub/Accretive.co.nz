@@ -10,8 +10,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as { plan?: string };
+  const body = (await request.json().catch(() => ({}))) as {
+    plan?: string;
+    paymentMethod?: "credit_charge" | "internet_banking" | "direct_debit";
+  };
   const plan = body.plan ?? "pro";
+  const paymentMethod = body.paymentMethod ?? "credit_charge";
 
   const autoActivate = (process.env.BILLING_STUB_AUTO_ACTIVATE ?? "true") === "true";
 
@@ -26,7 +30,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         checkoutUrl: "/dashboard/drafting?upgraded=1",
-        mode: "stub"
+        mode: "stub",
+        paymentMethod
       },
       { status: 200 }
     );
@@ -36,6 +41,7 @@ export async function POST(request: Request) {
     {
       checkoutUrl: "/pricing?checkout=pending",
       mode: "provider_stub",
+      paymentMethod,
       message: "Connect Stripe checkout session creation here."
     },
     { status: 200 }

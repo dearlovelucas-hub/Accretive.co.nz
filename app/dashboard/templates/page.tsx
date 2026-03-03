@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type TemplateItem = {
   id: string;
@@ -10,7 +11,23 @@ type TemplateItem = {
   updatedAt: string;
 };
 
+type TemplatePreviewResponse = {
+  template: {
+    id: string;
+    name: string;
+    fileName: string;
+    fileType: string;
+  };
+  previewText: string | null;
+  previewNote: string;
+};
+
+function displayTemplateName(template: Pick<TemplateItem, "name" | "fileName">): string {
+  return template.name?.trim() || template.fileName;
+}
+
 export default function TemplatesPage() {
+  const router = useRouter();
   const [items, setItems] = useState<TemplateItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,6 +35,11 @@ export default function TemplatesPage() {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateItem | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewText, setPreviewText] = useState<string | null>(null);
+  const [previewNote, setPreviewNote] = useState("");
+  const [previewError, setPreviewError] = useState("");
 
   async function loadTemplates() {
     try {
@@ -79,6 +101,46 @@ export default function TemplatesPage() {
     }
   }
 
+  async function onPreviewTemplate(template: TemplateItem) {
+    try {
+      setPreviewTemplate(template);
+      setIsPreviewLoading(true);
+      setPreviewError("");
+      setPreviewText(null);
+      setPreviewNote("");
+
+      const response = await fetch(`/api/templates/${template.id}/preview`);
+      const body = (await response.json().catch(() => null)) as
+        | (TemplatePreviewResponse & { error?: string })
+        | null;
+
+      if (!response.ok || !body) {
+        setPreviewError(body?.error ?? "Unable to preview template.");
+        return;
+      }
+
+      setPreviewText(body.previewText);
+      setPreviewNote(body.previewNote);
+    } catch {
+      setPreviewError("Unable to preview template.");
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  }
+
+  function closePreview() {
+    setPreviewTemplate(null);
+    setIsPreviewLoading(false);
+    setPreviewText(null);
+    setPreviewNote("");
+    setPreviewError("");
+  }
+
+  function onUseTemplateForDrafting(templateId: string) {
+    closePreview();
+    router.push(`/dashboard/drafting?templateId=${encodeURIComponent(templateId)}`);
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -108,9 +170,18 @@ export default function TemplatesPage() {
           ) : (
             items.map((template) => (
               <article key={template.id} className="rounded-xl border border-slate-300 p-4">
-                <h2 className="font-medium text-slate-900">{template.name}</h2>
+                <h2 className="font-medium text-slate-900">{displayTemplateName(template)}</h2>
                 <p className="mt-1 text-xs text-slate-600">File: {template.fileName}</p>
                 <p className="mt-1 text-xs text-slate-600">Updated: {new Date(template.updatedAt).toLocaleString()}</p>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => void onPreviewTemplate(template)}
+                    className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Preview template
+                  </button>
+                </div>
               </article>
             ))
           )}
@@ -161,6 +232,51 @@ export default function TemplatesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {previewTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-3xl rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-[#10243F]">{displayTemplateName(previewTemplate)}</h3>
+                <p className="mt-1 text-sm text-slate-600">{previewTemplate.fileName}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closePreview}
+                className="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-700 transition hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-[50vh] overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
+              {isPreviewLoading ? (
+                <p className="text-sm text-slate-600">Loading preview...</p>
+              ) : previewError ? (
+                <p className="text-sm text-red-700">{previewError}</p>
+              ) : previewText ? (
+                <pre className="whitespace-pre-wrap text-sm leading-6 text-slate-800">{previewText}</pre>
+              ) : (
+                <p className="text-sm text-slate-700">{previewNote || "Preview unavailable."}</p>
+              )}
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onUseTemplateForDrafting(previewTemplate.id)}
+                className="rounded-full bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33]"
+              >
+                Use this template in Drafting
+              </button>
+              <p className="text-xs text-slate-600">
+                Drafting will open with this template preloaded. You can then upload transaction documents.
+              </p>
+            </div>
           </div>
         </div>
       )}

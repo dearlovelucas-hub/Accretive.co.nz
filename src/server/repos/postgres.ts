@@ -268,6 +268,18 @@ export class PostgresTemplatesRepo implements TemplatesRepo {
       (row) => mapTemplate(row as Record<string, unknown>)
     );
   }
+
+  async findByIdForOwner(templateId: string, ownerUserId: string): Promise<TemplateRecord | null> {
+    return queryOne(
+      `SELECT *
+       FROM templates
+       WHERE id = $1
+         AND owner_user_id = $2
+       LIMIT 1`,
+      [templateId, ownerUserId],
+      (row) => mapTemplate(row as Record<string, unknown>)
+    );
+  }
 }
 
 export class PostgresDraftsRepo implements DraftsRepo {
@@ -401,6 +413,18 @@ export class PostgresUploadsRepo implements UploadsRepo {
     return query(
       `SELECT * FROM uploads WHERE draft_id = $1 ORDER BY created_at ASC`,
       [draftId],
+      (row) => mapUpload(row as Record<string, unknown>)
+    );
+  }
+
+  async getByIdForOwner(uploadId: string, ownerUserId: string): Promise<UploadRecord | null> {
+    return queryOne(
+      `SELECT *
+       FROM uploads
+       WHERE id = $1
+         AND owner_user_id = $2
+       LIMIT 1`,
+      [uploadId, ownerUserId],
       (row) => mapUpload(row as Record<string, unknown>)
     );
   }

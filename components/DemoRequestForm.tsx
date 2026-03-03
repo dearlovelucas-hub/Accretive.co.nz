@@ -139,45 +139,45 @@ export default function DemoRequestForm() {
       <form onSubmit={onSubmit} className="space-y-8" noValidate>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-200">Full name *</span>
+            <span className="mb-2 block text-sm text-slate-700">Full name *</span>
             <input
               required
               value={form.fullName}
               onChange={(event) => setForm({ ...form, fullName: event.target.value })}
-              className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             />
             {errors.fullName && <span className="mt-1 block text-sm text-rose-300">{errors.fullName}</span>}
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-200">Work email *</span>
+            <span className="mb-2 block text-sm text-slate-700">Work email *</span>
             <input
               required
               type="email"
               value={form.email}
               onChange={(event) => setForm({ ...form, email: event.target.value })}
-              className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             />
             {errors.email && <span className="mt-1 block text-sm text-rose-300">{errors.email}</span>}
           </label>
 
           <label className="block md:col-span-2">
-            <span className="mb-2 block text-sm text-slate-200">Firm / organisation *</span>
+            <span className="mb-2 block text-sm text-slate-700">Firm / organisation *</span>
             <input
               required
               value={form.organisation}
               onChange={(event) => setForm({ ...form, organisation: event.target.value })}
-              className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             />
             {errors.organisation && <span className="mt-1 block text-sm text-rose-300">{errors.organisation}</span>}
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-200">Role</span>
+            <span className="mb-2 block text-sm text-slate-700">Role</span>
             <select
               value={form.role}
               onChange={(event) => setForm({ ...form, role: event.target.value })}
-              className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             >
               <option value="">Select role</option>
               {roles.map((role) => (
@@ -189,11 +189,11 @@ export default function DemoRequestForm() {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-200">Firm size</span>
+            <span className="mb-2 block text-sm text-slate-700">Firm size</span>
             <select
               value={form.firmSize}
               onChange={(event) => setForm({ ...form, firmSize: event.target.value })}
-              className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             >
               <option value="">Select size</option>
               <option value="1-10">1-10</option>
@@ -205,15 +205,15 @@ export default function DemoRequestForm() {
         </div>
 
         <fieldset>
-          <legend className="mb-3 text-sm text-slate-200">Practice area</legend>
+          <legend className="mb-3 text-sm text-slate-700">Practice area</legend>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {practiceOptions.map((option) => (
-              <label key={option} className="flex items-center gap-2 text-sm text-slate-100">
+              <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
                 <input
                   type="checkbox"
                   checked={form.practiceAreas.includes(option)}
                   onChange={(event) => updateArrayField("practiceAreas", option, event.target.checked)}
-                  className="h-4 w-4 rounded border-white/40 bg-transparent accent-white"
+                  className="h-4 w-4 rounded border-slate-300 bg-white accent-[#10243F]"
                 />
                 {option}
               </label>
@@ -222,35 +222,35 @@ export default function DemoRequestForm() {
         </fieldset>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-200">Document types of interest</span>
+          <span className="mb-2 block text-sm text-slate-700">Document types of interest</span>
           <input
             value={form.docTypes}
             onChange={(event) => setForm({ ...form, docTypes: event.target.value })}
-            className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             placeholder="e.g. Share purchase agreement, board resolutions"
           />
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-200">Current drafting tooling/process</span>
+          <span className="mb-2 block text-sm text-slate-700">Current drafting tooling/process</span>
           <textarea
             value={form.currentProcess}
             onChange={(event) => setForm({ ...form, currentProcess: event.target.value })}
             rows={3}
-            className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
           />
         </label>
 
         <fieldset>
-          <legend className="mb-3 text-sm text-slate-200">Security requirements</legend>
+          <legend className="mb-3 text-sm text-slate-700">Security requirements</legend>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {securityOptions.map((option) => (
-              <label key={option} className="flex items-center gap-2 text-sm text-slate-100">
+              <label key={option} className="flex items-center gap-2 text-sm text-slate-700">
                 <input
                   type="checkbox"
                   checked={form.securityRequirements.includes(option)}
                   onChange={(event) => updateArrayField("securityRequirements", option, event.target.checked)}
-                  className="h-4 w-4 rounded border-white/40 bg-transparent accent-white"
+                  className="h-4 w-4 rounded border-slate-300 bg-white accent-[#10243F]"
                 />
                 {option}
               </label>
@@ -259,22 +259,22 @@ export default function DemoRequestForm() {
         </fieldset>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-200">Notes/message</span>
+          <span className="mb-2 block text-sm text-slate-700">Notes/message</span>
           <textarea
             value={form.notes}
             onChange={(event) => setForm({ ...form, notes: event.target.value })}
             rows={4}
-            className="w-full rounded-lg border border-white/20 bg-slate-950/60 px-3 py-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
           />
         </label>
 
-        <label className="flex items-start gap-2 text-sm text-slate-100">
+        <label className="flex items-start gap-2 text-sm text-slate-700">
           <input
             required
             type="checkbox"
             checked={form.consent}
             onChange={(event) => setForm({ ...form, consent: event.target.checked })}
-            className="mt-1 h-4 w-4 rounded border-white/40 bg-transparent accent-white"
+            className="mt-1 h-4 w-4 rounded border-slate-300 bg-white accent-[#10243F]"
           />
           I agree to be contacted about a demo.
         </label>
@@ -283,7 +283,7 @@ export default function DemoRequestForm() {
         <button
           type="submit"
           disabled={!canSubmit || isSubmitting}
-          className="rounded-full border border-mist/70 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full border border-[#10243F] bg-[#10243F] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting ? "Submitting..." : "Submit request"}
         </button>

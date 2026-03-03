@@ -119,6 +119,7 @@ export interface TemplatesRepo {
     uploadId?: string;
   }): Promise<TemplateRecord>;
   listByOwner(ownerUserId: string): Promise<TemplateRecord[]>;
+  findByIdForOwner(templateId: string, ownerUserId: string): Promise<TemplateRecord | null>;
 }
 
 export interface DraftsRepo {
@@ -155,6 +156,7 @@ export interface UploadsRepo {
     content: Buffer;
   }): Promise<UploadRecord>;
   listByDraftId(draftId: string): Promise<UploadRecord[]>;
+  getByIdForOwner(uploadId: string, ownerUserId: string): Promise<UploadRecord | null>;
 }
 
 export interface JobsRepo {

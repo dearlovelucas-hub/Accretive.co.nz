@@ -2,6 +2,11 @@
 
 Production-ready marketing site for Accretive built with Next.js App Router, TypeScript, and Tailwind CSS.
 
+## Documentation Split
+
+- Frontend docs: `docs/frontend/README.md`
+- Backend docs: `docs/backend/README.md`
+
 ## Stack
 
 - Next.js (App Router)

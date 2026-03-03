@@ -43,7 +43,7 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1220]/45 p-6"
       onClick={onClose}
       role="presentation"
     >
@@ -53,15 +53,15 @@ export default function Modal({
         aria-label={title}
         tabIndex={-1}
         ref={dialogRef}
-        className="w-full max-w-2xl rounded-panel border border-white/15 bg-[#0b1220] p-6 shadow-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+        className="w-full max-w-2xl rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
+          <h2 className="text-xl font-semibold text-[#10243F]">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist"
+            className="rounded-md px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-[#10243F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
           >
             Close
           </button>

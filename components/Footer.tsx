@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white py-8">
       <Container className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
-        <p>Accretive legal drafting platform</p>
+        <p>Accretive - Draft with structure. Advise with confidence.</p>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <Link href="/privacy-policy" className="transition hover:text-[#0B1F4D]">
             Privacy Policy
