@@ -38,12 +38,10 @@ Define a backend-ready dashboard UI contract so frontend screens can be delivere
 - `idle`: default view with form controls enabled.
 - `submitting`: uploads or create-job request in progress.
 - `processing`: polling current draft job until completion.
-- `paywalled`: preview available but full output/download blocked.
 - `ready`: full output and document download available.
 - `error`: recoverable request or validation failure.
 
 ## Backend Notes
 
-- Keep entitlement checks server-side in result and download endpoints.
 - Keep document visibility enforced via repository filters and RLS.
 - Return stable response shapes to avoid frontend refactors.

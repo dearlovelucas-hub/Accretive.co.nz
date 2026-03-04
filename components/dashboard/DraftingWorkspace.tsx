@@ -7,7 +7,6 @@ type Stage = "idle" | "processing" | "complete";
 type BillingMethod = "credit_charge" | "internet_banking" | "direct_debit";
 
 type DraftResult = {
-  isPaywalled: boolean;
   previewLength: number;
   upgradeUrlOrRoute: string;
   content: string;
@@ -50,7 +49,6 @@ export default function DraftingWorkspace() {
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>("credit_charge");
   const [billingConnected, setBillingConnected] = useState(false);
-  const [billingStatusLoading, setBillingStatusLoading] = useState(true);
   const [billingActionLoading, setBillingActionLoading] = useState(false);
   const [billingNotice, setBillingNotice] = useState("");
   const [connectedBillingMethod, setConnectedBillingMethod] = useState<BillingMethod | null>(null);
@@ -81,10 +79,7 @@ export default function DraftingWorkspace() {
 
   const hasRequiredInputs = useMemo(() => Boolean(templateFile && transactionDocs.length > 0), [templateFile, transactionDocs.length]);
 
-  const canGenerate = useMemo(
-    () => hasRequiredInputs && billingConnected && !billingStatusLoading && stage !== "processing",
-    [hasRequiredInputs, billingConnected, billingStatusLoading, stage]
-  );
+  const canGenerate = useMemo(() => hasRequiredInputs && stage !== "processing", [hasRequiredInputs, stage]);
 
   useEffect(() => {
     return () => {
@@ -104,7 +99,6 @@ export default function DraftingWorkspace() {
 
     async function fetchBillingStatus() {
       try {
-        setBillingStatusLoading(true);
         const response = await fetch("/api/billing/status", { credentials: "include" });
         const body = (await response.json().catch(() => null)) as { active?: boolean; error?: string } | null;
 
@@ -121,10 +115,6 @@ export default function DraftingWorkspace() {
       } catch {
         if (active) {
           setBillingConnected(false);
-        }
-      } finally {
-        if (active) {
-          setBillingStatusLoading(false);
         }
       }
     }
@@ -201,7 +191,6 @@ export default function DraftingWorkspace() {
       }
 
       setDraftResult({
-        isPaywalled: Boolean(body?.isPaywalled),
         previewLength: Number(body?.previewLength ?? 600),
         upgradeUrlOrRoute: String(body?.upgradeUrlOrRoute ?? "/pricing"),
         content: String(body?.content ?? ""),
@@ -248,11 +237,6 @@ export default function DraftingWorkspace() {
 
   async function onGenerateDraft() {
     if (!templateFile) return;
-    if (!billingConnected) {
-      setError("Connect billing before generating a document.");
-      setIsBillingModalOpen(true);
-      return;
-    }
 
     setError("");
     setDraftResult(null);
@@ -473,30 +457,17 @@ export default function DraftingWorkspace() {
           </label>
 
           <div className="space-y-2">
-            {billingConnected ? (
-              <button
-                type="button"
-                onClick={onGenerateDraft}
-                disabled={!canGenerate}
-                className="rounded-full bg-[#10243F] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F] disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                {stage === "processing" ? "Generating..." : "Generate document"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsBillingModalOpen(true)}
-                disabled={billingStatusLoading || stage === "processing"}
-                className="rounded-full border border-[#10243F] bg-white px-6 py-3 text-sm font-medium text-[#10243F] transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F] disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                {billingStatusLoading ? "Checking billing..." : "Connect billing to generate document"}
-              </button>
+            <button
+              type="button"
+              onClick={onGenerateDraft}
+              disabled={!canGenerate}
+              className="rounded-full bg-[#10243F] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {stage === "processing" ? "Generating..." : "Generate document"}
+            </button>
+            {billingConnected && (
+              <p className="text-xs text-slate-600">Billing connected{billingMethodLabel ? ` via ${billingMethodLabel}` : ""}.</p>
             )}
-            <p className="text-xs text-slate-600">
-              {billingConnected
-                ? `Billing connected${billingMethodLabel ? ` via ${billingMethodLabel}` : ""}.`
-                : "Connect billing before generating a document."}
-            </p>
           </div>
         </>
       )}
@@ -535,52 +506,29 @@ export default function DraftingWorkspace() {
 
                 <div className="max-h-[540px] overflow-auto p-6">
                   <div className="mx-auto min-h-[680px] w-full max-w-[760px] rounded-sm border border-slate-300 bg-white p-10 shadow-sm">
-                    <pre className={`whitespace-pre-wrap text-sm leading-7 text-slate-800 ${draftResult.isPaywalled ? "select-none" : ""}`}>
-                      {draftResult.content}
-                    </pre>
+                    <pre className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{draftResult.content}</pre>
                   </div>
                 </div>
               </div>
 
-              {draftResult.isPaywalled ? (
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-sm text-slate-700">Preview only. Unlock full draft output to continue.</p>
-                  <button
-                    type="button"
-                    onClick={() => setIsBillingModalOpen(true)}
-                    className="rounded-full bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F]"
-                  >
-                    Connect billing
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onDownloadComparisonPdf}
-                    disabled={!jobId || comparisonDownloadLoading}
-                    className="rounded-full border border-[#10243F] px-4 py-2 text-sm text-[#10243F] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {comparisonDownloadLoading ? "Building comparison..." : "Download comparison PDF"}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={onDownloadDocx}
-                    disabled={!jobId || downloadLoading}
-                    className="inline-block rounded-full border border-emerald-600 px-4 py-2 text-sm text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {downloadLoading ? "Downloading..." : "Download DOCX"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onDownloadComparisonPdf}
-                    disabled={!jobId || comparisonDownloadLoading}
-                    className="rounded-full border border-[#10243F] px-4 py-2 text-sm text-[#10243F] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {comparisonDownloadLoading ? "Building comparison..." : "Download comparison PDF"}
-                  </button>
-                </div>
-              )}
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onDownloadDocx}
+                  disabled={!jobId || downloadLoading}
+                  className="inline-block rounded-full border border-emerald-600 px-4 py-2 text-sm text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {downloadLoading ? "Downloading..." : "Download DOCX"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onDownloadComparisonPdf}
+                  disabled={!jobId || comparisonDownloadLoading}
+                  className="rounded-full border border-[#10243F] px-4 py-2 text-sm text-[#10243F] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {comparisonDownloadLoading ? "Building comparison..." : "Download comparison PDF"}
+                </button>
+              </div>
             </>
           )}
         </section>

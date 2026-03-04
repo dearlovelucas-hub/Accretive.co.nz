@@ -30,8 +30,8 @@ Route handlers are implemented with Next.js App Router APIs:
 - `GET /api/demo-requests` lists persisted demo requests
 - `POST /api/draft-jobs` accepts `multipart/form-data` (template, transaction docs, deal info) and starts a generation job
 - `GET /api/draft-jobs/:jobId` returns job status/progress
-- `GET /api/draft-jobs/:jobId/result` returns generated text result with server-side subscription gating
-- `GET /api/draft-jobs/:jobId/download` returns full `.docx` only for active subscriptions
+- `GET /api/draft-jobs/:jobId/result` returns generated text result
+- `GET /api/draft-jobs/:jobId/download` returns full `.docx` output
 - `GET /api/draft-jobs/:jobId/trace` returns per-job review trace (prompt metadata + step outputs)
 - `GET /api/documents` returns current user's generated draft jobs for dashboard documents
 - `GET /api/documents/:documentId` returns a single visible document (owner/member or org-admin policy)
@@ -44,12 +44,7 @@ Route handlers are implemented with Next.js App Router APIs:
 - `POST /api/billing/create-checkout-session` creates billing checkout URL (stub or provider integration point)
 - `POST /api/billing/webhook` updates subscription state from billing events
 
-## Paywall Behavior
-
-- Active subscription: full generated draft output + DOCX download enabled.
-- No active subscription: preview-only output is returned (`isPaywalled: true`) and full output is never returned by API.
-- All gating is enforced server-side in result/download endpoints (client cannot bypass).
-- Draft generation requires at least one transaction document server-side; optional term sheet is supported.
+Draft generation requires at least one transaction document server-side; optional term sheet is supported.
 
 Entitlement helper:
 
@@ -154,7 +149,7 @@ LLM generation:
 
 - Draft generation now uses Claude via `@anthropic-ai/sdk` in `lib/server/llmDrafting.ts`.
 - If `ANTHROPIC_API_KEY` is missing, the backend returns a deterministic fallback draft instead of live LLM output.
-- Dashboard Drafting now shows a review trace panel (context, required fields, missing questions, final draft step with paywall-aware locking).
+- Dashboard Drafting now shows a review trace panel (context, required fields, missing questions, final draft step).
 
 Local webhook test example:
 

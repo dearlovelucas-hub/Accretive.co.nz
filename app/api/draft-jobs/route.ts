@@ -4,7 +4,6 @@ import { validateDraftJobInput } from "@/lib/server/validation";
 import { getSessionFromRequest } from "@/lib/server/auth";
 import { processDraftJob } from "@/lib/server/draftProcessor";
 import { getRepos } from "@/src/server/repos";
-import { getEntitlement } from "@/lib/server/subscriptions";
 
 export const runtime = "nodejs";
 
@@ -12,11 +11,6 @@ export async function POST(request: Request) {
   const session = getSessionFromRequest(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const entitlement = await getEntitlement(session.userId);
-  if (!entitlement.active) {
-    return NextResponse.json({ error: "Connect billing before generating a document." }, { status: 402 });
   }
 
   try {

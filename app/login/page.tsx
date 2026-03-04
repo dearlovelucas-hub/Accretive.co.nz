@@ -106,24 +106,6 @@ export default function LoginPage() {
       <section className="mx-auto max-w-xl rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel md:p-8">
         <h1 className="text-3xl font-semibold text-[#10243F]">Client Login</h1>
         <p className="mt-3 text-sm text-slate-700">Securely access your Accretive workspace using your unique credentials.</p>
-        <div className="mt-4 rounded-lg border border-[#d7e4fb] bg-[#f4f8ff] p-3 text-sm text-slate-700">
-          <p>
-            Demo account: <span className="font-semibold">Lucas</span> / <span className="font-semibold">accretive123</span>
-          </p>
-          {!currentUser && (
-            <button
-              type="button"
-              onClick={() => {
-                setUsername("Lucas");
-                setPassword("accretive123");
-              }}
-              className="mt-2 rounded-full border border-[#10243F] px-4 py-1.5 text-xs font-medium text-[#10243F] transition hover:bg-[#e7f0ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
-            >
-              Use demo credentials
-            </button>
-          )}
-        </div>
-
         {currentUser ? (
           <div className="mt-8 space-y-4">
             <p className="rounded-lg border border-emerald-300/30 bg-emerald-900/30 p-3 text-sm text-emerald-100">

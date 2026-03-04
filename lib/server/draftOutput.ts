@@ -13,7 +13,6 @@ export function buildDraftResultPayload(args: {
   const upgradeUrlOrRoute = args.upgradeUrlOrRoute ?? "/pricing";
 
   return {
-    isPaywalled: false,
     previewLength,
     upgradeUrlOrRoute,
     content: job.generatedOutput,
