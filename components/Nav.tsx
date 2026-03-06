@@ -26,51 +26,56 @@ export default function Nav() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="flex h-16 items-center justify-between px-3 md:px-5">
-        <Link
-          href="/"
-          className="inline-flex items-center text-3xl font-semibold tracking-tight text-[#10243F] transition hover:text-[#355f95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] md:text-4xl font-[var(--font-wordmark)]"
-        >
-          Accretive
-        </Link>
-        <nav aria-label="Primary" className="flex items-center gap-2 overflow-x-auto">
-          {links.map((link) => {
-            const active = isActiveLink(link.href);
-            return (
+    <header className="sticky top-3 z-40 px-3 md:px-5">
+      <div className="mx-auto max-w-[1220px] space-y-2">
+        <div className="rounded-[28px] border border-[#d7e4fb] bg-white/72 shadow-[0_14px_36px_rgba(16,36,63,0.16)] backdrop-blur-xl">
+          <div className="flex h-16 items-center justify-between px-4 md:px-6">
+            <Link
+              href="/"
+              className="inline-flex items-center text-3xl font-semibold tracking-tight text-[#10243F] transition hover:text-[#355f95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] md:text-4xl font-[var(--font-wordmark)]"
+            >
+              Accretive
+            </Link>
+            <nav aria-label="Primary" className="flex items-center gap-2 overflow-x-auto">
+              {links.map((link) => {
+                const active = isActiveLink(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]",
+                      "border border-slate-300/85 bg-white/85 text-[#10243F] hover:border-[#355f95] hover:bg-[#eef4ff]/90",
+                      active && "border-[#7fa8de] bg-[#d9eaff]/95 font-semibold text-[#10243F]"
+                    )}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               <Link
-                key={link.href}
-                href={link.href}
+                href="/login"
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]",
-                  "border border-slate-300 bg-white text-[#10243F] hover:border-[#355f95] hover:bg-[#eef4ff]",
-                  active && "border-[#7fa8de] bg-[#d9eaff] font-semibold text-[#10243F]"
+                  "border border-[#10243F] bg-[#10243F] text-white hover:bg-[#0d1d33]"
                 )}
-                aria-current={active ? "page" : undefined}
+                aria-current={pathname === "/login" ? "page" : undefined}
               >
-                {link.label}
+                Sign In
               </Link>
-            );
-          })}
+            </nav>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-full border border-[#10243F] bg-[#10243F] shadow-[0_10px_24px_rgba(16,36,63,0.2)]">
           <Link
-            href="/login"
-            className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]",
-              "border border-[#10243F] bg-[#10243F] text-white hover:bg-[#0d1d33]"
-            )}
-            aria-current={pathname === "/login" ? "page" : undefined}
+            href={featuredInsightHref}
+            className="block px-3 py-2 text-center text-sm font-semibold text-[#e7f0ff] transition hover:bg-[#163257] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9dbcec] md:px-5"
           >
-            Sign In
+            New Insight: New Zealand&apos;s Responsible AI Guidance for Businesses
           </Link>
-        </nav>
-      </div>
-      <div className="border-t border-[#1d3f6e] bg-[#10243F]">
-        <Link
-          href={featuredInsightHref}
-          className="block px-3 py-2 text-center text-sm font-semibold text-[#e7f0ff] transition hover:bg-[#163257] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9dbcec] md:px-5"
-        >
-          New Insight: New Zealand&apos;s Responsible AI Guidance for Businesses
-        </Link>
+        </div>
       </div>
     </header>
   );
