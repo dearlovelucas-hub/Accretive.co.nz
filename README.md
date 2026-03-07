@@ -143,6 +143,9 @@ Environment variables are documented in `.env.example`:
 - `BILLING_WEBHOOK_SECRET`
 - `BILLING_STUB_AUTO_ACTIVATE`
 - `NEXT_PUBLIC_APP_URL`
+- `STORAGE_PROVIDER` (`database` recommended on Vercel)
+- `CRON_SECRET` (recommended for `/api/internal/jobs/run-next` cron auth)
+- `INTERNAL_JOBS_SECRET` (optional manual runner trigger secret)
 - `ACCRETIVE_DB_SCHEMA` (optional, useful for test isolation)
 
 LLM generation:
@@ -167,7 +170,15 @@ Migrations:
 - `db/migrations/0003_matters_pipeline.sql`
 - `db/migrations/0004_multi_tenant_documents.sql`
 - `db/migrations/0005_rls_document_isolation.sql`
+- `db/migrations/0006_llm_leasing.sql`
+- `db/migrations/0007_serverless_runtime.sql`
 - Runner: `npm run db:migrate`
+
+Serverless job runner (Vercel):
+
+- Queue worker endpoint: `GET|POST /api/internal/jobs/run-next`
+- Vercel cron is configured in `vercel.json` to call it every minute.
+- In production, set `CRON_SECRET` (or `INTERNAL_JOBS_SECRET`) so the worker endpoint is authenticated.
 
 Document isolation:
 

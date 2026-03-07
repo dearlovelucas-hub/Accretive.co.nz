@@ -8,12 +8,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "SESSION_SECRET=test-only-session-secret-1234 NODE_ENV=test node --test --test-concurrency=1 --experimental-strip-types --experimental-specifier-resolution=node tests/**/*.test.ts",
+    "test": "SESSION_SECRET=test-only-session-secret-1234 NODE_ENV=test node --env-file-if-exists=.env.local --test --test-concurrency=1 --experimental-strip-types --experimental-specifier-resolution=node tests/**/*.test.ts",
     "db:migrate": "node scripts/run-migrations.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
+    "@types/jszip": "^3.4.0",
     "html-to-docx": "^1.8.0",
+    "jszip": "^3.10.1",
     "mammoth": "^1.8.0",
     "next": "15.1.12",
     "pdf-parse": "^1.1.1",

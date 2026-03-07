@@ -76,6 +76,7 @@ export function setRepos(next: Repos): void {
 export async function truncateAllTablesForTests(): Promise<void> {
   await execute(
     `TRUNCATE TABLE
+      storage_blobs,
       extraction_cache,
       documents,
       draft_outputs,

@@ -49,6 +49,11 @@ export type DraftRecord = {
   promptPreview?: string;
   llmModel?: string;
   traceSteps?: DraftTraceStep[];
+  // Patch plan fields (migration 0006)
+  patchPlan?: unknown;
+  unresolved?: unknown;
+  modelTrace?: unknown;
+  outputDocxTracked?: Buffer;
   createdAt: string;
   updatedAt: string;
 };
@@ -61,6 +66,13 @@ export type JobRecord = {
   progress: number;
   errorMessage?: string;
   matterId?: string;
+  // Lease fields (migration 0006)
+  leasedAt?: string;
+  leaseOwner?: string;
+  leaseExpiresAt?: string;
+  attempts: number;
+  lastErrorCode?: string;
+  lastErrorMessage?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -138,7 +150,16 @@ export interface DraftsRepo {
     patch: Partial<
       Pick<
         DraftRecord,
-        "generatedOutput" | "promptVersion" | "promptHash" | "promptPreview" | "llmModel" | "traceSteps"
+        | "generatedOutput"
+        | "promptVersion"
+        | "promptHash"
+        | "promptPreview"
+        | "llmModel"
+        | "traceSteps"
+        | "patchPlan"
+        | "unresolved"
+        | "modelTrace"
+        | "outputDocxTracked"
       >
     >
   ): Promise<DraftRecord | null>;
@@ -173,8 +194,31 @@ export interface JobsRepo {
   listByMatter(matterId: string): Promise<JobRecord[]>;
   update(
     id: string,
-    patch: Partial<Pick<JobRecord, "status" | "progress" | "errorMessage">>
+    patch: Partial<Pick<JobRecord, "status" | "progress" | "errorMessage" | "lastErrorCode" | "lastErrorMessage">>
   ): Promise<JobRecord | null>;
+  /**
+   * Atomically claim the processing lease for a job.
+   * Only succeeds when the job is in "queued" status, or in "processing" with
+   * an expired lease.  Returns the updated record on success, null if the
+   * job is already leased by another owner.
+   */
+  claimLease(input: {
+    jobId: string;
+    leaseOwner: string;
+    leaseDurationMs: number;
+  }): Promise<JobRecord | null>;
+  /**
+   * Release the lease (set leased_at / lease_owner / lease_expires_at to NULL)
+   * without changing the overall job status, so the job can be re-claimed.
+   */
+  releaseLease(jobId: string): Promise<void>;
+  /**
+   * Count jobs that are currently in "processing" with a non-expired lease,
+   * scoped to a specific owner user.
+   */
+  countActiveLeasesByOwner(ownerUserId: string): Promise<number>;
+  /** Count all active leased jobs globally. */
+  countActiveLeasesGlobal(): Promise<number>;
 }
 
 export interface EntitlementsRepo {

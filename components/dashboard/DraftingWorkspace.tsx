@@ -46,6 +46,8 @@ export default function DraftingWorkspace() {
   const [resultLoading, setResultLoading] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [comparisonDownloadLoading, setComparisonDownloadLoading] = useState(false);
+  const [trackedDownloadLoading, setTrackedDownloadLoading] = useState(false);
+  const [trackedUnresolvedCount, setTrackedUnresolvedCount] = useState<number | null>(null);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>("credit_charge");
   const [billingConnected, setBillingConnected] = useState(false);
@@ -344,6 +346,57 @@ export default function DraftingWorkspace() {
     }
   }
 
+  async function onDownloadTrackedChanges() {
+    if (!jobId) {
+      setError("No generated draft is available for download yet.");
+      return;
+    }
+
+    try {
+      setError("");
+      setTrackedDownloadLoading(true);
+
+      // Step 1: trigger the patch-plan + tracked-changes pipeline
+      const runResponse = await fetch(`/api/drafts/${jobId}/llm-run`, {
+        method: "POST",
+        credentials: "include"
+      });
+
+      if (!runResponse.ok) {
+        const body = (await runResponse.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Unable to generate tracked-changes draft.");
+      }
+
+      const runBody = (await runResponse.json()) as { unresolvedCount?: number };
+      setTrackedUnresolvedCount(runBody.unresolvedCount ?? 0);
+
+      // Step 2: download the tracked-changes DOCX
+      const downloadResponse = await fetch(`/api/drafts/${jobId}/download?variant=tracked`, {
+        method: "GET",
+        credentials: "include"
+      });
+
+      if (!downloadResponse.ok) {
+        const body = (await downloadResponse.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Unable to download tracked-changes DOCX.");
+      }
+
+      const blob = await downloadResponse.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = "accretive-tracked-changes.docx";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to download tracked-changes draft.");
+    } finally {
+      setTrackedDownloadLoading(false);
+    }
+  }
+
   async function onDownloadComparisonPdf() {
     if (!jobId) {
       setError("No generated draft is available for comparison yet.");
@@ -522,6 +575,14 @@ export default function DraftingWorkspace() {
                 </button>
                 <button
                   type="button"
+                  onClick={onDownloadTrackedChanges}
+                  disabled={!jobId || trackedDownloadLoading}
+                  className="rounded-full border border-[#10243F] bg-[#10243F] px-4 py-2 text-sm text-white transition hover:bg-[#0d1d33] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {trackedDownloadLoading ? "Generating tracked changes..." : "Download with tracked changes"}
+                </button>
+                <button
+                  type="button"
                   onClick={onDownloadComparisonPdf}
                   disabled={!jobId || comparisonDownloadLoading}
                   className="rounded-full border border-[#10243F] px-4 py-2 text-sm text-[#10243F] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -529,6 +590,11 @@ export default function DraftingWorkspace() {
                   {comparisonDownloadLoading ? "Building comparison..." : "Download comparison PDF"}
                 </button>
               </div>
+              {trackedUnresolvedCount !== null && trackedUnresolvedCount > 0 && (
+                <p className="text-xs text-amber-700">
+                  {trackedUnresolvedCount} field{trackedUnresolvedCount === 1 ? "" : "s"} could not be resolved automatically — review the tracked changes document.
+                </p>
+              )}
             </>
           )}
         </section>

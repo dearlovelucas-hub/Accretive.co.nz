@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createDraftJob } from "@/lib/server/draftJobsStore";
 import { validateDraftJobInput } from "@/lib/server/validation";
 import { getSessionFromRequest } from "@/lib/server/auth";
-import { processDraftJob } from "@/lib/server/draftProcessor";
+import { runQueuedJobs } from "@/lib/server/jobRunner";
 import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
@@ -82,12 +82,15 @@ export async function POST(request: Request) {
       });
     }
 
-    void processDraftJob({
-      jobId: job.id,
-      templateFile,
-      transactionFiles: transactionFileObjects,
-      termSheetFile: termSheet instanceof File ? termSheet : undefined,
-      dealInfo
+    after(async () => {
+      try {
+        await runQueuedJobs({
+          maxJobs: 1,
+          source: "draft-jobs-enqueue"
+        });
+      } catch {
+        // Queue fallback is handled by the cron worker; no-op here.
+      }
     });
 
     return NextResponse.json(

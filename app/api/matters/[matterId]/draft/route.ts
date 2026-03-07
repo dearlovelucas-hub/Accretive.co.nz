@@ -1,8 +1,8 @@
 import * as crypto from "node:crypto";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { requireOrgSession } from "@/lib/server/orgAuth";
 import { getRepos } from "@/src/server/repos";
-import { processPrecedentJob } from "@/lib/server/precedentPipeline";
+import { runQueuedJobs } from "@/lib/server/jobRunner";
 
 export const runtime = "nodejs";
 
@@ -70,11 +70,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
     matterId
   });
 
-  void processPrecedentJob({
-    jobId: job.id,
-    matterId,
-    orgId,
-    userId: session.userId
+  after(async () => {
+    try {
+      await runQueuedJobs({
+        maxJobs: 1,
+        source: "matter-draft-enqueue"
+      });
+    } catch {
+      // Queue fallback is handled by the cron worker; no-op here.
+    }
   });
 
   return NextResponse.json({ jobId: job.id, status: job.status, progress: job.progress }, { status: 202 });

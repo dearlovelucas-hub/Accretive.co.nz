@@ -113,6 +113,15 @@ function mapDraft(row: Record<string, unknown>): DraftRecord {
     promptPreview: row.prompt_preview ? String(row.prompt_preview) : undefined,
     llmModel: row.llm_model ? String(row.llm_model) : undefined,
     traceSteps: parseTraceSteps(row.trace_steps),
+    patchPlan: row.patch_plan ?? undefined,
+    unresolved: row.unresolved ?? undefined,
+    modelTrace: row.model_trace ?? undefined,
+    outputDocxTracked:
+      row.output_docx_tracked instanceof Buffer
+        ? row.output_docx_tracked
+        : row.output_docx_tracked
+          ? Buffer.from(row.output_docx_tracked as Uint8Array)
+          : undefined,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
   };
@@ -127,6 +136,12 @@ function mapJob(row: Record<string, unknown>): JobRecord {
     progress: Number(row.progress),
     errorMessage: row.error_message ? String(row.error_message) : undefined,
     matterId: row.matter_id ? String(row.matter_id) : undefined,
+    leasedAt: row.leased_at ? toIso(row.leased_at) : undefined,
+    leaseOwner: row.lease_owner ? String(row.lease_owner) : undefined,
+    leaseExpiresAt: row.lease_expires_at ? toIso(row.lease_expires_at) : undefined,
+    attempts: Number(row.attempts ?? 0),
+    lastErrorCode: row.last_error_code ? String(row.last_error_code) : undefined,
+    lastErrorMessage: row.last_error_message ? String(row.last_error_message) : undefined,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
   };
@@ -332,7 +347,19 @@ export class PostgresDraftsRepo implements DraftsRepo {
   async update(
     id: string,
     patch: Partial<
-      Pick<DraftRecord, "generatedOutput" | "promptVersion" | "promptHash" | "promptPreview" | "llmModel" | "traceSteps">
+      Pick<
+        DraftRecord,
+        | "generatedOutput"
+        | "promptVersion"
+        | "promptHash"
+        | "promptPreview"
+        | "llmModel"
+        | "traceSteps"
+        | "patchPlan"
+        | "unresolved"
+        | "modelTrace"
+        | "outputDocxTracked"
+      >
     >
   ): Promise<DraftRecord | null> {
     const existing = await this.getById(id);
@@ -349,6 +376,10 @@ export class PostgresDraftsRepo implements DraftsRepo {
          prompt_preview = $5,
          llm_model = $6,
          trace_steps = $7::jsonb,
+         patch_plan = $8::jsonb,
+         unresolved = $9::jsonb,
+         model_trace = $10::jsonb,
+         output_docx_tracked = $11,
          updated_at = NOW()
        WHERE id = $1
        RETURNING *`,
@@ -359,7 +390,19 @@ export class PostgresDraftsRepo implements DraftsRepo {
         patch.promptHash ?? existing.promptHash ?? null,
         patch.promptPreview ?? existing.promptPreview ?? null,
         patch.llmModel ?? existing.llmModel ?? null,
-        JSON.stringify(patch.traceSteps ?? existing.traceSteps ?? null)
+        JSON.stringify(patch.traceSteps ?? existing.traceSteps ?? null),
+        "patchPlan" in patch
+          ? patch.patchPlan != null ? JSON.stringify(patch.patchPlan) : null
+          : existing.patchPlan != null ? JSON.stringify(existing.patchPlan) : null,
+        "unresolved" in patch
+          ? patch.unresolved != null ? JSON.stringify(patch.unresolved) : null
+          : existing.unresolved != null ? JSON.stringify(existing.unresolved) : null,
+        "modelTrace" in patch
+          ? patch.modelTrace != null ? JSON.stringify(patch.modelTrace) : null
+          : existing.modelTrace != null ? JSON.stringify(existing.modelTrace) : null,
+        "outputDocxTracked" in patch
+          ? (patch.outputDocxTracked ?? null)
+          : (existing.outputDocxTracked ?? null)
       ],
       (row) => mapDraft(row as Record<string, unknown>)
     );
@@ -473,7 +516,7 @@ export class PostgresJobsRepo implements JobsRepo {
 
   async update(
     id: string,
-    patch: Partial<Pick<JobRecord, "status" | "progress" | "errorMessage">>
+    patch: Partial<Pick<JobRecord, "status" | "progress" | "errorMessage" | "lastErrorCode" | "lastErrorMessage">>
   ): Promise<JobRecord | null> {
     const existing = await this.getById(id);
     if (!existing) {
@@ -486,14 +529,88 @@ export class PostgresJobsRepo implements JobsRepo {
          status = $2,
          progress = $3,
          error_message = $4,
+         last_error_code = $5,
+         last_error_message = $6,
          updated_at = NOW()
        WHERE id = $1
        RETURNING *`,
-      [id, patch.status ?? existing.status, patch.progress ?? existing.progress, patch.errorMessage ?? null],
+      [
+        id,
+        patch.status ?? existing.status,
+        patch.progress ?? existing.progress,
+        patch.errorMessage ?? null,
+        patch.lastErrorCode ?? existing.lastErrorCode ?? null,
+        patch.lastErrorMessage ?? existing.lastErrorMessage ?? null
+      ],
       (row) => mapJob(row as Record<string, unknown>)
     );
 
     return result[0] ?? null;
+  }
+
+  async claimLease(input: {
+    jobId: string;
+    leaseOwner: string;
+    leaseDurationMs: number;
+  }): Promise<JobRecord | null> {
+    const leaseExpiry = new Date(Date.now() + input.leaseDurationMs).toISOString();
+
+    // Atomically transition queued → processing, or steal an expired processing lease.
+    const rows = await query(
+      `UPDATE jobs
+       SET
+         status            = 'processing',
+         leased_at         = NOW(),
+         lease_owner       = $2,
+         lease_expires_at  = $3::timestamptz,
+         attempts          = COALESCE(attempts, 0) + 1,
+         updated_at        = NOW()
+       WHERE id = $1
+         AND (
+           status = 'queued'
+           OR (status = 'processing' AND (lease_expires_at IS NULL OR lease_expires_at < NOW()))
+         )
+       RETURNING *`,
+      [input.jobId, input.leaseOwner, leaseExpiry],
+      (row) => mapJob(row as Record<string, unknown>)
+    );
+
+    return rows[0] ?? null;
+  }
+
+  async releaseLease(jobId: string): Promise<void> {
+    await query(
+      `UPDATE jobs
+       SET
+         leased_at        = NULL,
+         lease_owner      = NULL,
+         lease_expires_at = NULL,
+         updated_at       = NOW()
+       WHERE id = $1`,
+      [jobId]
+    );
+  }
+
+  async countActiveLeasesByOwner(ownerUserId: string): Promise<number> {
+    const rows = await query<{ cnt: string }>(
+      `SELECT COUNT(*) AS cnt
+       FROM jobs
+       WHERE owner_user_id = $1
+         AND status = 'processing'
+         AND lease_expires_at > NOW()`,
+      [ownerUserId]
+    );
+    return Number(rows[0]?.cnt ?? 0);
+  }
+
+  async countActiveLeasesGlobal(): Promise<number> {
+    const rows = await query<{ cnt: string }>(
+      `SELECT COUNT(*) AS cnt
+       FROM jobs
+       WHERE status = 'processing'
+         AND lease_expires_at > NOW()`
+    );
+    return Number(rows[0]?.cnt ?? 0);
   }
 }
 

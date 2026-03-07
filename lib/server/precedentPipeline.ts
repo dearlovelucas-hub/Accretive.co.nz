@@ -38,6 +38,7 @@ export async function processPrecedentJob(args: {
   matterId: string;
   orgId: string;
   userId: string;
+  releaseLeaseOnFinish?: boolean;
 }): Promise<void> {
   const repos = getRepos();
   const storage = getStorageProvider();
@@ -129,5 +130,9 @@ export async function processPrecedentJob(args: {
       progress: 100,
       errorMessage
     });
+  } finally {
+    if (args.releaseLeaseOnFinish) {
+      await repos.jobs.releaseLease(args.jobId);
+    }
   }
 }

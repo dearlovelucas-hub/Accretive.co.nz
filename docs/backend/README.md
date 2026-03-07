@@ -19,6 +19,7 @@ Backend code in this project handles auth, billing, draft generation, data persi
 - Templates: `/api/templates/*`
 - Billing: `/api/billing/*`
 - Activity and matter workflows: `/api/activity`, `/api/matters/*`, `/api/jobs/*`
+- Internal worker: `/api/internal/jobs/run-next` (queue processor for serverless deployments)
 
 ## Data Layer
 
@@ -41,6 +42,9 @@ See `.env.example` for required values:
 - `BILLING_STUB_AUTO_ACTIVATE`
 - `NEXT_PUBLIC_APP_URL`
 - `STORAGE_BASE_PATH`
+- `STORAGE_PROVIDER`
+- `CRON_SECRET`
+- `INTERNAL_JOBS_SECRET`
 
 ## Dashboard UI Draft
 

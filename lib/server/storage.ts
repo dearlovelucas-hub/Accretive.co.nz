@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execute, query, queryOne } from "@/src/server/db";
 
 export interface StorageProvider {
   put(key: string, buf: Buffer): Promise<void>;
@@ -54,12 +55,68 @@ export class LocalDiskStorageProvider implements StorageProvider {
   }
 }
 
+type StorageBlobRow = {
+  content: Buffer | Uint8Array;
+};
+
+export class DatabaseStorageProvider implements StorageProvider {
+  async put(key: string, buf: Buffer): Promise<void> {
+    await query(
+      `INSERT INTO storage_blobs (key, content)
+       VALUES ($1, $2)
+       ON CONFLICT (key)
+       DO UPDATE SET
+         content = EXCLUDED.content,
+         updated_at = NOW()`,
+      [key, buf]
+    );
+  }
+
+  async get(key: string): Promise<Buffer> {
+    const row = await queryOne<StorageBlobRow>(
+      `SELECT content
+       FROM storage_blobs
+       WHERE key = $1
+       LIMIT 1`,
+      [key]
+    );
+
+    if (!row) {
+      throw new Error(`Storage object not found for key: ${key}`);
+    }
+
+    return row.content instanceof Buffer ? row.content : Buffer.from(row.content);
+  }
+
+  async delete(key: string): Promise<void> {
+    await execute(`DELETE FROM storage_blobs WHERE key = $1`, [key]);
+  }
+}
+
 let storageInstance: StorageProvider | null = null;
+
+function resolveStorageProviderKind(): "disk" | "database" {
+  const configured = (process.env.STORAGE_PROVIDER ?? "").trim().toLowerCase();
+  if (configured === "disk" || configured === "local") {
+    return "disk";
+  }
+  if (configured === "db" || configured === "database") {
+    return "database";
+  }
+
+  // Vercel/serverless default: avoid ephemeral filesystem for persistent artifacts.
+  return process.env.NODE_ENV === "production" ? "database" : "disk";
+}
 
 export function getStorageProvider(): StorageProvider {
   if (!storageInstance) {
-    const basePath = process.env.STORAGE_BASE_PATH ?? path.join(process.cwd(), "data");
-    storageInstance = new LocalDiskStorageProvider(basePath);
+    const providerKind = resolveStorageProviderKind();
+    if (providerKind === "database") {
+      storageInstance = new DatabaseStorageProvider();
+    } else {
+      const basePath = process.env.STORAGE_BASE_PATH ?? path.join(process.cwd(), "data");
+      storageInstance = new LocalDiskStorageProvider(basePath);
+    }
   }
   return storageInstance;
 }
