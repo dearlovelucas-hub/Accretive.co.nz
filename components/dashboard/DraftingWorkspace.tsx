@@ -48,6 +48,9 @@ export default function DraftingWorkspace() {
   const [comparisonDownloadLoading, setComparisonDownloadLoading] = useState(false);
   const [trackedDownloadLoading, setTrackedDownloadLoading] = useState(false);
   const [trackedUnresolvedCount, setTrackedUnresolvedCount] = useState<number | null>(null);
+  const [unresolvedFields, setUnresolvedFields] = useState<Array<{ field: string; question: string; location?: string }>>([]);
+  const [resolveAnswers, setResolveAnswers] = useState<Record<string, string>>({});
+  const [resolveLoading, setResolveLoading] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>("credit_charge");
   const [billingConnected, setBillingConnected] = useState(false);
@@ -367,8 +370,19 @@ export default function DraftingWorkspace() {
         throw new Error(body?.error ?? "Unable to generate tracked-changes draft.");
       }
 
-      const runBody = (await runResponse.json()) as { unresolvedCount?: number };
+      const runBody = (await runResponse.json()) as {
+        unresolvedCount?: number;
+        unresolved?: Array<{ field: string; question: string; location?: string }>;
+      };
+      const fields = runBody.unresolved ?? [];
       setTrackedUnresolvedCount(runBody.unresolvedCount ?? 0);
+
+      if (fields.length > 0) {
+        setUnresolvedFields(fields);
+        setResolveAnswers({});
+        setTrackedDownloadLoading(false);
+        return;
+      }
 
       // Step 2: download the tracked-changes DOCX
       const downloadResponse = await fetch(`/api/drafts/${jobId}/download?variant=tracked`, {
@@ -390,6 +404,69 @@ export default function DraftingWorkspace() {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to download tracked-changes draft.");
+    } finally {
+      setTrackedDownloadLoading(false);
+    }
+  }
+
+  async function downloadTrackedDocx() {
+    if (!jobId) return;
+    const downloadResponse = await fetch(`/api/drafts/${jobId}/download?variant=tracked`, {
+      method: "GET",
+      credentials: "include"
+    });
+    if (!downloadResponse.ok) {
+      const body = (await downloadResponse.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? "Unable to download tracked-changes DOCX.");
+    }
+    const blob = await downloadResponse.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = "accretive-tracked-changes.docx";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  async function onResolveAndDownload() {
+    if (!jobId) return;
+    try {
+      setError("");
+      setResolveLoading(true);
+
+      const response = await fetch(`/api/drafts/${jobId}/resolve`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: resolveAnswers })
+      });
+
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Unable to apply answers.");
+      }
+
+      const body = (await response.json()) as { unresolvedCount?: number };
+      setTrackedUnresolvedCount(body.unresolvedCount ?? 0);
+      setUnresolvedFields([]);
+      await downloadTrackedDocx();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to resolve fields.");
+    } finally {
+      setResolveLoading(false);
+    }
+  }
+
+  async function onSkipResolveAndDownload() {
+    try {
+      setError("");
+      setTrackedDownloadLoading(true);
+      setUnresolvedFields([]);
+      await downloadTrackedDocx();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to download tracked-changes draft.");
     } finally {
@@ -590,7 +667,49 @@ export default function DraftingWorkspace() {
                   {comparisonDownloadLoading ? "Building comparison..." : "Download comparison PDF"}
                 </button>
               </div>
-              {trackedUnresolvedCount !== null && trackedUnresolvedCount > 0 && (
+              {unresolvedFields.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+                  <p className="text-sm font-medium text-amber-800">
+                    {unresolvedFields.length} field{unresolvedFields.length === 1 ? "" : "s"} need your input before downloading
+                  </p>
+                  <div className="space-y-3">
+                    {unresolvedFields.map((f) => (
+                      <label key={f.field} className="block">
+                        <span className="text-sm text-amber-900">{f.question}</span>
+                        {f.location && (
+                          <span className="ml-2 text-xs text-amber-700">({f.location})</span>
+                        )}
+                        <input
+                          type="text"
+                          value={resolveAnswers[f.field] ?? ""}
+                          onChange={(e) => setResolveAnswers((prev) => ({ ...prev, [f.field]: e.target.value }))}
+                          className="mt-1 block w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                          placeholder="Enter value..."
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={onResolveAndDownload}
+                      disabled={resolveLoading}
+                      className="rounded-full bg-amber-700 px-4 py-2 text-sm text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {resolveLoading ? "Applying..." : "Apply answers & download"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onSkipResolveAndDownload}
+                      disabled={resolveLoading}
+                      className="text-sm text-slate-600 underline hover:text-slate-900 disabled:opacity-50"
+                    >
+                      Skip — download as-is
+                    </button>
+                  </div>
+                </div>
+              )}
+              {unresolvedFields.length === 0 && trackedUnresolvedCount !== null && trackedUnresolvedCount > 0 && (
                 <p className="text-xs text-amber-700">
                   {trackedUnresolvedCount} field{trackedUnresolvedCount === 1 ? "" : "s"} could not be resolved automatically — review the tracked changes document.
                 </p>
