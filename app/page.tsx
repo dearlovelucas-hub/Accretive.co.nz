@@ -1,25 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Container from "@/components/Container";
 import Hero from "@/components/Hero";
 import FeatureGrid from "@/components/FeatureGrid";
 import Modal from "@/components/Modal";
 
 const documentTypes = [
-  "Board and Shareholder Resolutions",
-  "Compliance Certificates",
-  "Letters and demands",
-  "Disclosure letters",
-  "Bulk document drafting",
-  "Loan and Security documentation"
+  { title: "Board and Shareholder Resolutions", description: "Conditional drafting applied automatically — sole director or two-director forms selected based on transaction context." },
+  { title: "Directors' Certificates", description: "Solvency and confirmation certificates populated with company details, director names, and execution structure." },
+  { title: "Disclosure Letters", description: "Standard disclosure letters incorporating specific disclosures drawn from uploaded transaction materials." },
+  { title: "Loan and Security Documentation", description: "Facility letters, security documents, and ancillary certificates populated consistently across the full suite." },
+  { title: "Schedules and Annexures", description: "Transaction schedules requiring consistent party and property details applied across multiple documents." },
+  { title: "Ancillary Transaction Documents", description: "Settlement statements, condition satisfaction notices, and execution materials prepared from deal context." }
 ];
 
 const valueAddItems = [
-  { label: "Routine drafting, clause rewording and formatting cleanup", type: "cross" as const },
-  { label: "Basic proofreading, typos and grammar corrections", type: "cross" as const },
-  { label: "Negotiation strategy and commercial judgment", type: "tick" as const },
-  { label: "Client communication and risk framing", type: "tick" as const }
+  { label: "Populating precedent templates with transaction-specific details", type: "cross" as const },
+  { label: "Applying drafting elections across resolutions and certificates", type: "cross" as const },
+  { label: "Legal judgment, negotiation strategy, and advice to clients", type: "tick" as const },
+  { label: "Substantive review and sign-off before execution", type: "tick" as const }
 ];
 
 export default function HomePage() {
@@ -36,24 +37,29 @@ export default function HomePage() {
         <section className="-mt-24 rounded-panel border border-[#d5e3fb] bg-white/90 p-6 shadow-panel md:-mt-28 md:p-8">
           <p className="text-sm uppercase tracking-[0.12em] text-[#355f95]">Built for growing law firms</p>
           <h2 className="mt-3 text-3xl font-semibold text-[#10243F] md:text-4xl">
-            Streamline drafting of high-frequency legal documents
+            Drafting support built for transactional practice
           </h2>
           <p className="mt-4 max-w-3xl text-slate-700">
-            Accretive turns your precedent documents and transaction inputs into first drafts within minutes, with consistent
-            structure and clean execution. Your team spends less time on repeat drafting and more time where legal judgment matters
-            most.
+            Accretive is a drafting platform for law firms. You upload your precedent template and the relevant transaction
+            documents. Accretive reads those materials, identifies the transaction details, and populates your template
+            accordingly. The output is a Word document — adjusted to the matter, returned to you for review before execution.
+          </p>
+          <p className="mt-3 max-w-3xl text-slate-700">
+            The platform assists your lawyers. It does not exercise legal judgment on your behalf.
           </p>
         </section>
 
         <section className="py-16">
-          <h3 className="text-2xl font-semibold text-[#10243F]">Popular document workflows</h3>
+          <h3 className="text-2xl font-semibold text-[#10243F]">Document types</h3>
+          <p className="mt-2 text-slate-700">Typical workflows across commercial, property, and finance transactions.</p>
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {documentTypes.map((docType) => (
+            {documentTypes.map((doc) => (
               <article
-                key={docType}
+                key={doc.title}
                 className="rounded-panel border border-[#d7e4fb] bg-gradient-to-b from-white to-[#f6f9ff] p-5 shadow-[0_10px_24px_rgba(16,36,63,0.08)]"
               >
-                <p className="font-medium text-slate-800">{docType}</p>
+                <p className="font-medium text-slate-800">{doc.title}</p>
+                <p className="mt-2 text-sm text-slate-600">{doc.description}</p>
               </article>
             ))}
           </div>
@@ -61,9 +67,10 @@ export default function HomePage() {
 
         <section className="grid grid-cols-1 gap-6 rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel md:grid-cols-2 md:p-8">
           <div>
-            <h3 className="text-2xl font-semibold text-[#10243F]">Reduce routine drafting</h3>
+            <h3 className="text-2xl font-semibold text-[#10243F]">Where Accretive helps — and where it doesn&apos;t</h3>
             <p className="mt-3 text-slate-700">
-              Let your lawyers refocus on client outcomes, negotiation and technical drafting: Accretive takes care of the mundane.
+              Accretive handles the mechanical work of applying transaction details to your firm&apos;s precedents. Your lawyers
+              retain responsibility for reviewing, advising, and approving every document before it leaves the firm.
             </p>
           </div>
           <ul className="space-y-3">
@@ -86,14 +93,25 @@ export default function HomePage() {
         <FeatureGrid />
 
         <section className="mt-8 rounded-panel border border-[#bcd3f7] bg-gradient-to-r from-[#dce8fb] to-[#ebf3ff] p-6 text-center md:p-8">
-          <h3 className="text-2xl font-semibold text-[#10243F]">Draft with structure. Advise with confidence.</h3>
-          <button
-            type="button"
-            onClick={() => setIsDemoModalOpen(true)}
-            className="mt-4 rounded-full border border-[#10243F] bg-[#10243F] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F]"
-          >
-            See Workflow Demo
-          </button>
+          <h3 className="text-2xl font-semibold text-[#10243F]">See how it works with your own precedents</h3>
+          <p className="mt-2 text-sm text-slate-700">
+            We offer a structured walkthrough using documents representative of your practice. No configuration required in advance.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/request-demo"
+              className="rounded-full border border-[#10243F] bg-[#10243F] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F]"
+            >
+              Book a walkthrough
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsDemoModalOpen(true)}
+              className="rounded-full border border-[#355f95] bg-white px-5 py-2 text-sm font-semibold text-[#10243F] transition hover:bg-[#eef4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
+            >
+              See a workflow demo
+            </button>
+          </div>
         </section>
 
         <Modal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} title="Demo Video">

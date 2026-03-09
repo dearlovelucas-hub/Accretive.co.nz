@@ -1,33 +1,33 @@
 const features = [
   {
     emoji: "🛡️",
-    title: "Security",
-    body: "Firm data is logically isolated at the organisation and matter level, with encrypted storage and strict access controls."
+    title: "Confidentiality",
+    body: "Every matter workspace is isolated. Documents uploaded to one matter are not accessible from another. Client materials are encrypted in transit and at rest."
   },
   {
     emoji: "🎯",
-    title: "Accuracy",
-    body: "Accretive maps transaction context to your template logic to reduce drafting errors and rework cycles."
+    title: "Consistency",
+    body: "Transaction details are applied systematically to your firm's own precedents, reducing the risk of missed fields, stale language, or inconsistent party names across a document suite."
   },
   {
     emoji: "⚡",
-    title: "Speed",
-    body: "Move from source documents to first draft quickly so lawyers can spend more time on judgment calls."
+    title: "Efficiency",
+    body: "From uploaded documents to a populated first draft in minutes. Junior lawyers spend less time on mechanical population and more time on substantive review."
   },
   {
-    emoji: "💸",
-    title: "Cost",
-    body: "No per-seat licences. No firm-wide lock-in. Only pay for the documents you generate."
+    emoji: "📋",
+    title: "Familiar output",
+    body: "Every document is returned in Word DOCX format with tracked changes visible. Review and approval follow your firm's existing workflow — nothing needs to change."
   }
 ];
 
 export default function FeatureGrid() {
   return (
     <section className="py-20">
-      <h2 className="text-3xl font-semibold text-[#10243F]">Why Accretive</h2>
+      <h2 className="text-3xl font-semibold text-[#10243F]">Why growing firms use Accretive</h2>
       <p className="mt-3 text-slate-700">
-        Security is built into every stage of drafting, with matter-level isolation, role-based access, auditable activity, and
-        encryption for sensitive client documents in transit and at rest.
+        As transaction volume increases, so does the risk of drafting inconsistency. Accretive reduces that risk by
+        systematically applying transaction details to your firm&apos;s own precedents.
       </p>
       <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
         {features.map((feature) => (
