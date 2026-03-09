@@ -1,16 +1,20 @@
-import { after, NextResponse } from "next/server";
+import { after, NextResponse } from "next/server.js";
+import { requireCsrfProtection, requireOrgMembership } from "@/lib/server/authorization";
 import { createDraftJob } from "@/lib/server/draftJobsStore";
 import { validateDraftJobInput } from "@/lib/server/validation";
-import { getSessionFromRequest } from "@/lib/server/auth";
 import { runQueuedJobs } from "@/lib/server/jobRunner";
 import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+  const csrf = requireCsrfProtection(request);
+  if (!csrf.ok) {
+    return csrf.response;
   }
 
   try {
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
     const termSheetFileName = termSheet instanceof File ? termSheet.name : undefined;
 
     const job = await createDraftJob({
-      ownerUserId: session.userId,
+      ownerUserId: auth.value.userId,
       templateFileName: templateFile.name,
       transactionFileNames,
       termSheetFileName,
@@ -49,7 +53,7 @@ export async function POST(request: Request) {
 
     const repos = getRepos();
     await repos.uploads.create({
-      ownerUserId: session.userId,
+      ownerUserId: auth.value.userId,
       draftId: job.id,
       purpose: "template",
       fileName: templateFile.name,
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
 
     for (const file of transactionFileObjects) {
       await repos.uploads.create({
-        ownerUserId: session.userId,
+        ownerUserId: auth.value.userId,
         draftId: job.id,
         purpose: "transaction",
         fileName: file.name,
@@ -72,7 +76,7 @@ export async function POST(request: Request) {
 
     if (termSheet instanceof File) {
       await repos.uploads.create({
-        ownerUserId: session.userId,
+        ownerUserId: auth.value.userId,
         draftId: job.id,
         purpose: "term_sheet",
         fileName: termSheet.name,

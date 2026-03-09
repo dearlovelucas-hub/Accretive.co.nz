@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server.js";
 import {
   createSessionToken,
   getAuthCookieName,
   getSessionTtlSeconds,
+  shouldUseSecureCookies,
   verifyUserCredentials
 } from "@/lib/server/auth";
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
       name: getAuthCookieName(),
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: shouldUseSecureCookies(request),
       sameSite: "lax",
       path: "/",
       maxAge: getSessionTtlSeconds()

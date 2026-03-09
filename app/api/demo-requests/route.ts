@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership, requireRole } from "@/lib/server/authorization";
 import { createDemoRequest, listDemoRequests } from "@/lib/server/demoRequestsStore";
 import { validateDemoRequest } from "@/lib/server/validation";
 
@@ -20,6 +21,15 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+  const role = requireRole(auth.value, ["admin"]);
+  if (!role.ok) {
+    return role.response;
+  }
+
   return NextResponse.json({ items: await listDemoRequests() }, { status: 200 });
 }

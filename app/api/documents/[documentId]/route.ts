@@ -1,22 +1,20 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
-import { getRepos } from "@/src/server/repos";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request, context: { params: Promise<{ documentId: string }> }) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const { documentId } = await context.params;
-  const repos = getRepos();
-  const doc = await repos.documents.getVisibleByIdForUser(session.userId, documentId);
-
-  if (!doc) {
-    return NextResponse.json({ error: "Document not found" }, { status: 404 });
+  const access = await requireResourceAccess(auth.value, "document", documentId, "read");
+  if (!access.ok) {
+    return access.response;
   }
+  const doc = access.value;
 
   return NextResponse.json(
     {

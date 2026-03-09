@@ -1,4 +1,4 @@
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { buildSensitiveHeaders, requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
@@ -9,25 +9,26 @@ function toSafeFilename(name: string): string {
 }
 
 export async function GET(request: Request, context: { params: Promise<{ templateId: string }> }) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return new Response("Unauthorized.", { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const { templateId } = await context.params;
-  const repos = getRepos();
-
-  const template = await repos.templates.findByIdForOwner(templateId, session.userId);
-  if (!template) {
-    return new Response("Template not found.", { status: 404 });
+  const access = await requireResourceAccess(auth.value, "template", templateId, "download");
+  if (!access.ok) {
+    return access.response;
   }
+
+  const repos = getRepos();
+  const template = access.value;
 
   if (!template.uploadId) {
     return new Response("Template source file is unavailable.", { status: 404 });
   }
 
-  const upload = await repos.uploads.getByIdForOwner(template.uploadId, session.userId);
-  if (!upload) {
+  const upload = await repos.uploads.getByIdForOrg(template.uploadId, auth.value.orgId);
+  if (!upload || upload.ownerUserId !== auth.value.userId) {
     return new Response("Template source file is unavailable.", { status: 404 });
   }
 
@@ -36,10 +37,9 @@ export async function GET(request: Request, context: { params: Promise<{ templat
 
   return new Response(upload.content, {
     status: 200,
-    headers: {
+    headers: buildSensitiveHeaders({
       "Content-Type": fileType,
-      "Content-Disposition": `inline; filename="${fileName}"`,
-      "Cache-Control": "private, max-age=60"
-    }
+      "Content-Disposition": `attachment; filename="${fileName}"`
+    })
   });
 }

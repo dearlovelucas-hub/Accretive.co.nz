@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireCsrfProtection, requireOrgMembership } from "@/lib/server/authorization";
 import { setSubscriptionForUser } from "@/lib/server/subscriptions";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+  const csrf = requireCsrfProtection(request);
+  if (!csrf.ok) {
+    return csrf.response;
   }
 
   const body = (await request.json().catch(() => ({}))) as {
@@ -21,7 +25,7 @@ export async function POST(request: Request) {
 
   // Stripe integration stub: keep secrets server-side only and return a redirect URL.
   if (!process.env.STRIPE_SECRET_KEY && autoActivate) {
-    await setSubscriptionForUser(session.userId, {
+    await setSubscriptionForUser(auth.value.userId, {
       plan,
       status: "active",
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()

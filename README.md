@@ -147,6 +147,8 @@ Environment variables are documented in `.env.example`:
 - `CRON_SECRET` (recommended for `/api/internal/jobs/run-next` cron auth)
 - `INTERNAL_JOBS_SECRET` (optional manual runner trigger secret)
 - `ACCRETIVE_DB_SCHEMA` (optional, useful for test isolation)
+- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS` (optional, defaults to `10`, set `0` to disable)
+- `ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS` (optional, defaults to `86400000` = 24h)
 
 LLM generation:
 

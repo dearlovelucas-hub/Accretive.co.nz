@@ -10,9 +10,14 @@
  *  - Idempotent: if the job is already complete returns the existing output.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server.js";
 import * as crypto from "node:crypto";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import {
+  buildSensitiveHeaders,
+  requireCsrfProtection,
+  requireOrgMembership,
+  requireResourceAccess
+} from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos/index";
 import { tryClaimLease, failJobAndReleaseLease } from "@/src/server/llm/leasing";
 import { generatePatchPlan, buildFallbackPatchPlan } from "@/src/server/llm/anthropicWrapper";
@@ -74,46 +79,55 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ): Promise<NextResponse> {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+  const csrf = requireCsrfProtection(request);
+  if (!csrf.ok) {
+    return csrf.response;
   }
 
   const { jobId } = await params;
+  const jobAccess = await requireResourceAccess(auth.value, "job", jobId, "run");
+  if (!jobAccess.ok) {
+    return jobAccess.response;
+  }
+  const draftAccess = await requireResourceAccess(auth.value, "draft", jobId, "run");
+  if (!draftAccess.ok) {
+    return draftAccess.response;
+  }
+
   const repos = getRepos();
 
   // ------------------------------------------------------------------
   // Load job + draft
   // ------------------------------------------------------------------
   const [job, draft] = await Promise.all([
-    repos.jobs.getById(jobId),
-    repos.drafts.getById(jobId)
+    repos.jobs.getByIdForOrg(jobId, auth.value.orgId),
+    repos.drafts.getByIdForOrg(jobId, auth.value.orgId)
   ]);
 
   if (!job || !draft) {
     return NextResponse.json({ error: "Job not found." }, { status: 404 });
   }
 
-  // Ownership check
-  if (draft.ownerUserId !== session.userId) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
-
-  // Load user to get orgId for concurrency cap scope
-  const user = await repos.users.findById(session.userId);
-  const orgId = user?.orgId ?? session.userId;
+  const orgId = auth.value.orgId;
 
   // ------------------------------------------------------------------
   // Idempotency: already complete with tracked output
   // ------------------------------------------------------------------
   if (job.status === "complete" && draft.patchPlan && draft.outputDocxTracked) {
-    return NextResponse.json({
-      jobId,
-      status: "complete",
-      patchPlan: draft.patchPlan,
-      unresolved: draft.unresolved ?? [],
-      message: "Already complete."
-    });
+    return NextResponse.json(
+      {
+        jobId,
+        status: "complete",
+        patchPlan: draft.patchPlan,
+        unresolved: draft.unresolved ?? [],
+        message: "Already complete."
+      },
+      { headers: buildSensitiveHeaders() }
+    );
   }
 
   // ------------------------------------------------------------------
@@ -169,7 +183,7 @@ export async function POST(
   // ------------------------------------------------------------------
   let uploads;
   try {
-    uploads = await repos.uploads.listByDraftId(jobId);
+    uploads = await repos.uploads.listByDraftIdForOrg(jobId, auth.value.orgId);
   } catch (err) {
     await failJobAndReleaseLease({
       jobId,
@@ -232,7 +246,7 @@ export async function POST(
         otherInfo: draft.dealInfo || undefined,
         placeholderList,
         constraints: { jurisdiction: "NZ", noNewClauses: true },
-        metadata: { jobId, orgId, userId: session.userId }
+        metadata: { jobId, orgId, userId: auth.value.userId }
       });
       patchPlan = result.patchPlan;
       modelTrace = result.modelTrace;
@@ -294,11 +308,14 @@ export async function POST(
     throw err;
   }
 
-  return NextResponse.json({
-    jobId,
-    status: "complete",
-    patchPlan: mergedPatchPlan,
-    unresolved: mergedPatchPlan.unresolved,
-    unresolvedCount: mergedPatchPlan.unresolved.length
-  });
+  return NextResponse.json(
+    {
+      jobId,
+      status: "complete",
+      patchPlan: mergedPatchPlan,
+      unresolved: mergedPatchPlan.unresolved,
+      unresolvedCount: mergedPatchPlan.unresolved.length
+    },
+    { headers: buildSensitiveHeaders() }
+  );
 }

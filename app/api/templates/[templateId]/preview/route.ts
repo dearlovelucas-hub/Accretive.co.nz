@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos";
 
 const MAX_PREVIEW_CHARS = 12000;
@@ -45,21 +45,26 @@ async function extractPreviewText(fileName: string, fileType: string, content: B
 }
 
 export async function GET(request: Request, context: { params: Promise<{ templateId: string }> }) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const { templateId } = await context.params;
+  const access = await requireResourceAccess(auth.value, "template", templateId, "read");
+  if (!access.ok) {
+    return access.response;
+  }
+
   const repos = getRepos();
 
-  const template = await repos.templates.findByIdForOwner(templateId, session.userId);
-  if (!template || !template.uploadId) {
+  const template = access.value;
+  if (!template.uploadId) {
     return NextResponse.json({ error: "Template not found." }, { status: 404 });
   }
 
-  const upload = await repos.uploads.getByIdForOwner(template.uploadId, session.userId);
-  if (!upload) {
+  const upload = await repos.uploads.getByIdForOrg(template.uploadId, auth.value.orgId);
+  if (!upload || upload.ownerUserId !== auth.value.userId) {
     return NextResponse.json({ error: "Template source file is unavailable." }, { status: 404 });
   }
 

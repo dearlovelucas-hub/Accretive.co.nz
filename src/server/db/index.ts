@@ -1,9 +1,11 @@
-import type { Pool, QueryResultRow } from "pg";
-import { getDatabaseUrl } from "../env.ts";
+import type { Pool, PoolClient, QueryResultRow } from "pg";
+import { getDatabaseUrl, getEnv } from "../env.ts";
+import { DbRequestRateLimiter } from "./rateLimiter.ts";
 
 type RowMapper<T> = (row: QueryResultRow) => T;
 
 let poolPromise: Promise<Pool> | null = null;
+let rateLimiter: DbRequestRateLimiter | null = null;
 
 async function createPool(): Promise<Pool> {
   const [{ Pool }] = await Promise.all([import("pg")]);
@@ -24,12 +26,55 @@ async function getPool(): Promise<Pool> {
   return poolPromise;
 }
 
+function getRateLimiter(): DbRequestRateLimiter {
+  if (!rateLimiter) {
+    const env = getEnv();
+    rateLimiter = new DbRequestRateLimiter({
+      maxRequests: env.DB_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: env.DB_RATE_LIMIT_WINDOW_MS
+    });
+  }
+
+  return rateLimiter;
+}
+
+async function acquireDbRateLimit(): Promise<void> {
+  await getRateLimiter().acquire();
+}
+
+function createRateLimitedClient(client: PoolClient): PoolClient {
+  const target = client as PoolClient & {
+    query: (...args: unknown[]) => Promise<unknown>;
+  };
+
+  const rateLimitedQuery = (async (...args: unknown[]) => {
+    await acquireDbRateLimit();
+    return target.query(...args);
+  }) as unknown as PoolClient["query"];
+
+  return new Proxy(client, {
+    get(nextTarget, prop, receiver) {
+      if (prop === "query") {
+        return rateLimitedQuery;
+      }
+
+      const value = Reflect.get(nextTarget, prop, receiver);
+      if (typeof value === "function") {
+        return value.bind(nextTarget);
+      }
+
+      return value;
+    }
+  });
+}
+
 export async function query<T = QueryResultRow>(
   text: string,
   params: readonly unknown[] = [],
   mapper?: RowMapper<T>
 ): Promise<T[]> {
   const pool = await getPool();
+  await acquireDbRateLimit();
   const result = await pool.query(text, params as unknown[]);
 
   if (!mapper) {
@@ -50,6 +95,7 @@ export async function queryOne<T = QueryResultRow>(
 
 export async function execute(text: string, params: readonly unknown[] = []): Promise<number> {
   const pool = await getPool();
+  await acquireDbRateLimit();
   const result = await pool.query(text, params as unknown[]);
   return result.rowCount ?? 0;
 }
@@ -77,7 +123,8 @@ export async function withDocumentSession<T>(
 
 export async function withTransaction<T>(fn: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
   const pool = await getPool();
-  const client = await pool.connect();
+  const rawClient = await pool.connect();
+  const client = createRateLimitedClient(rawClient);
 
   try {
     await client.query("BEGIN");
@@ -88,11 +135,13 @@ export async function withTransaction<T>(fn: (client: import("pg").PoolClient) =
     await client.query("ROLLBACK");
     throw error;
   } finally {
-    client.release();
+    rawClient.release();
   }
 }
 
 export async function closePool(): Promise<void> {
+  rateLimiter = null;
+
   if (!poolPromise) {
     return;
   }

@@ -7,10 +7,12 @@ import { ensureSeedData, verifyPassword } from "../../src/server/services/bootst
 const AUTH_COOKIE_NAME = "accretive_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 export type SessionPayload = {
+  sid: string;
   userId: string;
   username: string;
   displayName: string;
   role: "admin" | "member";
+  iat: number;
   exp: number;
 };
 
@@ -48,12 +50,15 @@ export async function verifyUserCredentials(username: string, password: string):
 }
 
 export function createSessionToken(user: Pick<UserRecord, "id" | "username" | "displayName" | "role">): string {
+  const issuedAt = Math.floor(Date.now() / 1000);
   const payload: SessionPayload = {
+    sid: crypto.randomUUID(),
     userId: user.id,
     username: user.username,
     displayName: user.displayName,
     role: user.role,
-    exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS
+    iat: issuedAt,
+    exp: issuedAt + SESSION_TTL_SECONDS
   };
 
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
@@ -78,11 +83,24 @@ export function parseSessionToken(token: string | undefined): SessionPayload | n
   }
 
   try {
-    const payload = JSON.parse(base64UrlDecode(encodedPayload)) as SessionPayload;
+    const payload = JSON.parse(base64UrlDecode(encodedPayload)) as Partial<SessionPayload>;
+    if (
+      typeof payload.sid !== "string" ||
+      typeof payload.userId !== "string" ||
+      typeof payload.username !== "string" ||
+      typeof payload.displayName !== "string" ||
+      (payload.role !== "admin" && payload.role !== "member") ||
+      typeof payload.iat !== "number" ||
+      typeof payload.exp !== "number"
+    ) {
+      return null;
+    }
+
     if (payload.exp < Math.floor(Date.now() / 1000)) {
       return null;
     }
-    return payload;
+
+    return payload as SessionPayload;
   } catch {
     return null;
   }
@@ -107,4 +125,21 @@ export function getAuthCookieName(): string {
 
 export function getSessionTtlSeconds(): number {
   return SESSION_TTL_SECONDS;
+}
+
+export function shouldUseSecureCookies(request: Request): boolean {
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.toLowerCase();
+  if (forwardedProto === "https") {
+    return true;
+  }
+  if (forwardedProto === "http") {
+    return false;
+  }
+
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").toLowerCase();
+  if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    return false;
+  }
+
+  return process.env.NODE_ENV !== "development" && process.env.NODE_ENV !== "test";
 }

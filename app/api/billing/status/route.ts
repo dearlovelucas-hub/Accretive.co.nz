@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership } from "@/lib/server/authorization";
 import { getEntitlement } from "@/lib/server/subscriptions";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
-  const entitlement = await getEntitlement(session.userId);
+  const entitlement = await getEntitlement(auth.value.userId);
   return NextResponse.json(
     {
       active: entitlement.active,

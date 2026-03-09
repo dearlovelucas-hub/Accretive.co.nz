@@ -10,8 +10,8 @@
  * }
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextRequest, NextResponse } from "next/server.js";
+import { buildSensitiveHeaders, requireCsrfProtection, requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos/index";
 import { patchDocxWithTrackedChanges } from "@/src/server/docx/docxTrackedChangesPatcher";
 import type { PatchPlan, FillPlaceholderOp, UnresolvedField } from "@/src/server/llm/types";
@@ -21,28 +21,37 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ): Promise<NextResponse> {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+  const csrf = requireCsrfProtection(request);
+  if (!csrf.ok) {
+    return csrf.response;
   }
 
   const { jobId } = await params;
+  const jobAccess = await requireResourceAccess(auth.value, "job", jobId, "write");
+  if (!jobAccess.ok) {
+    return jobAccess.response;
+  }
+  const draftAccess = await requireResourceAccess(auth.value, "draft", jobId, "write");
+  if (!draftAccess.ok) {
+    return draftAccess.response;
+  }
+
   const repos = getRepos();
 
   // ------------------------------------------------------------------
   // Load job + draft
   // ------------------------------------------------------------------
   const [job, draft] = await Promise.all([
-    repos.jobs.getById(jobId),
-    repos.drafts.getById(jobId)
+    repos.jobs.getByIdForOrg(jobId, auth.value.orgId),
+    repos.drafts.getByIdForOrg(jobId, auth.value.orgId)
   ]);
 
   if (!job || !draft) {
     return NextResponse.json({ error: "Job not found." }, { status: 404 });
-  }
-
-  if (draft.ownerUserId !== session.userId) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
   if (!draft.patchPlan) {
@@ -104,7 +113,7 @@ export async function POST(
   // ------------------------------------------------------------------
   // Load template upload and re-apply
   // ------------------------------------------------------------------
-  const uploads = await repos.uploads.listByDraftId(jobId);
+  const uploads = await repos.uploads.listByDraftIdForOrg(jobId, auth.value.orgId);
   const templateUpload = uploads.find((u) => u.purpose === "template");
 
   if (!templateUpload) {
@@ -142,11 +151,14 @@ export async function POST(
     outputDocxTracked: outputDocxBuffer
   });
 
-  return NextResponse.json({
-    jobId,
-    status: "complete",
-    resolvedCount: newFills.length,
-    remainingUnresolved: finalPlan.unresolved,
-    unresolvedCount: finalPlan.unresolved.length
-  });
+  return NextResponse.json(
+    {
+      jobId,
+      status: "complete",
+      resolvedCount: newFills.length,
+      remainingUnresolved: finalPlan.unresolved,
+      unresolvedCount: finalPlan.unresolved.length
+    },
+    { headers: buildSensitiveHeaders() }
+  );
 }

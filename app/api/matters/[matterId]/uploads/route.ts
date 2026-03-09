@@ -1,6 +1,6 @@
 import * as crypto from "node:crypto";
-import { NextResponse } from "next/server";
-import { requireOrgSession } from "@/lib/server/orgAuth";
+import { NextResponse } from "next/server.js";
+import { requireCsrfProtection, requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos";
 import { getStorageProvider, makeStorageKey } from "@/lib/server/storage";
 
@@ -10,16 +10,23 @@ const ALLOWED_KINDS = new Set(["PRECEDENT", "TERMSHEET"]);
 const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
 export async function POST(request: Request, { params }: { params: Promise<{ matterId: string }> }) {
-  const auth = await requireOrgSession(request);
+  const auth = await requireOrgMembership(request);
   if (!auth.ok) {
     return auth.response;
   }
-  const { session, orgId } = auth;
+  const csrf = requireCsrfProtection(request);
+  if (!csrf.ok) {
+    return csrf.response;
+  }
 
   const { matterId } = await params;
+  const access = await requireResourceAccess(auth.value, "matter", matterId, "write");
+  if (!access.ok) {
+    return access.response;
+  }
 
   const repos = getRepos();
-  const matter = await repos.matters.findByIdAndOrg(matterId, orgId);
+  const matter = await repos.matters.findByIdAndOrg(matterId, auth.value.orgId);
   if (!matter) {
     return NextResponse.json({ error: "Matter not found." }, { status: 404 });
   }
@@ -51,7 +58,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
   const kind = kindRaw as "PRECEDENT" | "TERMSHEET";
   const buffer = Buffer.from(await file.arrayBuffer());
   const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
-  const storageKey = makeStorageKey(orgId, matterId, kind, file.name);
+  const storageKey = makeStorageKey(auth.value.orgId, matterId, kind, file.name);
 
   const storage = getStorageProvider();
   await storage.put(storageKey, buffer);
@@ -59,8 +66,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
   const upload = await repos.matterUploads.create({
     id: crypto.randomUUID(),
     matterId,
-    orgId,
-    userId: session.userId,
+    orgId: auth.value.orgId,
+    userId: auth.value.userId,
     kind,
     filename: file.name,
     mimeType: file.type || "application/octet-stream",

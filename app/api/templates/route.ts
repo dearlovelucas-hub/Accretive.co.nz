@@ -1,23 +1,27 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireCsrfProtection, requireOrgMembership } from "@/lib/server/authorization";
 import { createTemplate, listTemplatesByOwner } from "@/lib/server/templatesStore";
 import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
-  return NextResponse.json({ items: await listTemplatesByOwner(session.userId) }, { status: 200 });
+  return NextResponse.json({ items: await listTemplatesByOwner(auth.value.userId) }, { status: 200 });
 }
 
 export async function POST(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+  const csrf = requireCsrfProtection(request);
+  if (!csrf.ok) {
+    return csrf.response;
   }
 
   try {
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
 
     const repos = getRepos();
     const upload = await repos.uploads.create({
-      ownerUserId: session.userId,
+      ownerUserId: auth.value.userId,
       purpose: "template",
       fileName: templateFile.name,
       fileType: templateFile.type,
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
     });
 
     const record = await createTemplate({
-      ownerUserId: session.userId,
+      ownerUserId: auth.value.userId,
       name,
       fileName: templateFile.name,
       fileType: templateFile.type,

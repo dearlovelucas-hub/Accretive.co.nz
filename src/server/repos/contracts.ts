@@ -131,7 +131,9 @@ export interface TemplatesRepo {
     uploadId?: string;
   }): Promise<TemplateRecord>;
   listByOwner(ownerUserId: string): Promise<TemplateRecord[]>;
+  listByOrg(orgId: string): Promise<TemplateRecord[]>;
   findByIdForOwner(templateId: string, ownerUserId: string): Promise<TemplateRecord | null>;
+  findByIdForOrg(templateId: string, orgId: string): Promise<TemplateRecord | null>;
 }
 
 export interface DraftsRepo {
@@ -143,7 +145,12 @@ export interface DraftsRepo {
     termSheetFileName?: string;
     dealInfo: string;
   }): Promise<DraftRecord>;
+  /**
+   * SECURITY RULE: request handlers must not perform bare resource lookups by ID.
+   * Use org-scoped methods in route handlers and authz checks.
+   */
   getById(id: string): Promise<DraftRecord | null>;
+  getByIdForOrg(id: string, orgId: string): Promise<DraftRecord | null>;
   listByOwner(ownerUserId: string): Promise<DraftRecord[]>;
   update(
     id: string,
@@ -177,7 +184,9 @@ export interface UploadsRepo {
     content: Buffer;
   }): Promise<UploadRecord>;
   listByDraftId(draftId: string): Promise<UploadRecord[]>;
+  listByDraftIdForOrg(draftId: string, orgId: string): Promise<UploadRecord[]>;
   getByIdForOwner(uploadId: string, ownerUserId: string): Promise<UploadRecord | null>;
+  getByIdForOrg(uploadId: string, orgId: string): Promise<UploadRecord | null>;
 }
 
 export interface JobsRepo {
@@ -190,8 +199,14 @@ export interface JobsRepo {
     errorMessage?: string;
     matterId?: string;
   }): Promise<JobRecord>;
+  /**
+   * SECURITY RULE: request handlers must not perform bare resource lookups by ID.
+   * Use org-scoped methods in route handlers and authz checks.
+   */
   getById(id: string): Promise<JobRecord | null>;
+  getByIdForOrg(id: string, orgId: string): Promise<JobRecord | null>;
   listByMatter(matterId: string): Promise<JobRecord[]>;
+  listByMatterForOrg(matterId: string, orgId: string): Promise<JobRecord[]>;
   update(
     id: string,
     patch: Partial<Pick<JobRecord, "status" | "progress" | "errorMessage" | "lastErrorCode" | "lastErrorMessage">>
@@ -311,6 +326,7 @@ export interface DraftOutputsRepo {
     sizeBytes: number;
   }): Promise<DraftOutputRecord>;
   getByJobId(jobId: string): Promise<DraftOutputRecord | null>;
+  getByJobIdForOrg(jobId: string, orgId: string): Promise<DraftOutputRecord | null>;
 }
 
 export interface ExtractionCacheRepo {
@@ -350,4 +366,5 @@ export interface DocumentsRepo {
   }): Promise<DocumentRecord>;
   listVisibleForUser(userId: string): Promise<DocumentRecord[]>;
   getVisibleByIdForUser(userId: string, documentId: string): Promise<DocumentRecord | null>;
+  getByIdForOrg(documentId: string, orgId: string): Promise<DocumentRecord | null>;
 }

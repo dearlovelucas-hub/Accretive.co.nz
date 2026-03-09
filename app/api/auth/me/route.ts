@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership, requireSession } from "@/lib/server/authorization";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
+  const session = requireSession(request);
+  if (!session.ok) {
+    return NextResponse.json({ authenticated: false }, { status: 200 });
+  }
+
+  const membership = await requireOrgMembership(request);
+  if (!membership.ok) {
     return NextResponse.json({ authenticated: false }, { status: 200 });
   }
 
@@ -13,10 +18,10 @@ export async function GET(request: Request) {
     {
       authenticated: true,
       user: {
-        id: session.userId,
-        username: session.username,
-        displayName: session.displayName,
-        role: session.role
+        id: membership.value.userId,
+        username: membership.value.session.username,
+        displayName: membership.value.session.displayName,
+        role: membership.value.role
       }
     },
     { status: 200 }

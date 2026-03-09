@@ -284,6 +284,18 @@ export class PostgresTemplatesRepo implements TemplatesRepo {
     );
   }
 
+  async listByOrg(orgId: string): Promise<TemplateRecord[]> {
+    return query(
+      `SELECT t.*
+       FROM templates t
+       JOIN users u ON u.id = t.owner_user_id
+       WHERE u.org_id = $1
+       ORDER BY t.updated_at DESC`,
+      [orgId],
+      (row) => mapTemplate(row as Record<string, unknown>)
+    );
+  }
+
   async findByIdForOwner(templateId: string, ownerUserId: string): Promise<TemplateRecord | null> {
     return queryOne(
       `SELECT *
@@ -292,6 +304,19 @@ export class PostgresTemplatesRepo implements TemplatesRepo {
          AND owner_user_id = $2
        LIMIT 1`,
       [templateId, ownerUserId],
+      (row) => mapTemplate(row as Record<string, unknown>)
+    );
+  }
+
+  async findByIdForOrg(templateId: string, orgId: string): Promise<TemplateRecord | null> {
+    return queryOne(
+      `SELECT t.*
+       FROM templates t
+       JOIN users u ON u.id = t.owner_user_id
+       WHERE t.id = $1
+         AND u.org_id = $2
+       LIMIT 1`,
+      [templateId, orgId],
       (row) => mapTemplate(row as Record<string, unknown>)
     );
   }
@@ -334,6 +359,19 @@ export class PostgresDraftsRepo implements DraftsRepo {
 
   async getById(id: string): Promise<DraftRecord | null> {
     return queryOne(`SELECT * FROM drafts WHERE id = $1 LIMIT 1`, [id], (row) => mapDraft(row as Record<string, unknown>));
+  }
+
+  async getByIdForOrg(id: string, orgId: string): Promise<DraftRecord | null> {
+    return queryOne(
+      `SELECT d.*
+       FROM drafts d
+       JOIN users u ON u.id = d.owner_user_id
+       WHERE d.id = $1
+         AND u.org_id = $2
+       LIMIT 1`,
+      [id, orgId],
+      (row) => mapDraft(row as Record<string, unknown>)
+    );
   }
 
   async listByOwner(ownerUserId: string): Promise<DraftRecord[]> {
@@ -460,6 +498,19 @@ export class PostgresUploadsRepo implements UploadsRepo {
     );
   }
 
+  async listByDraftIdForOrg(draftId: string, orgId: string): Promise<UploadRecord[]> {
+    return query(
+      `SELECT up.*
+       FROM uploads up
+       JOIN users u ON u.id = up.owner_user_id
+       WHERE up.draft_id = $1
+         AND u.org_id = $2
+       ORDER BY up.created_at ASC`,
+      [draftId, orgId],
+      (row) => mapUpload(row as Record<string, unknown>)
+    );
+  }
+
   async getByIdForOwner(uploadId: string, ownerUserId: string): Promise<UploadRecord | null> {
     return queryOne(
       `SELECT *
@@ -468,6 +519,19 @@ export class PostgresUploadsRepo implements UploadsRepo {
          AND owner_user_id = $2
        LIMIT 1`,
       [uploadId, ownerUserId],
+      (row) => mapUpload(row as Record<string, unknown>)
+    );
+  }
+
+  async getByIdForOrg(uploadId: string, orgId: string): Promise<UploadRecord | null> {
+    return queryOne(
+      `SELECT up.*
+       FROM uploads up
+       JOIN users u ON u.id = up.owner_user_id
+       WHERE up.id = $1
+         AND u.org_id = $2
+       LIMIT 1`,
+      [uploadId, orgId],
       (row) => mapUpload(row as Record<string, unknown>)
     );
   }
@@ -506,10 +570,36 @@ export class PostgresJobsRepo implements JobsRepo {
     return queryOne(`SELECT * FROM jobs WHERE id = $1 LIMIT 1`, [id], (row) => mapJob(row as Record<string, unknown>));
   }
 
+  async getByIdForOrg(id: string, orgId: string): Promise<JobRecord | null> {
+    return queryOne(
+      `SELECT j.*
+       FROM jobs j
+       JOIN users u ON u.id = j.owner_user_id
+       WHERE j.id = $1
+         AND u.org_id = $2
+       LIMIT 1`,
+      [id, orgId],
+      (row) => mapJob(row as Record<string, unknown>)
+    );
+  }
+
   async listByMatter(matterId: string): Promise<JobRecord[]> {
     return query(
       `SELECT * FROM jobs WHERE matter_id = $1 ORDER BY created_at DESC`,
       [matterId],
+      (row) => mapJob(row as Record<string, unknown>)
+    );
+  }
+
+  async listByMatterForOrg(matterId: string, orgId: string): Promise<JobRecord[]> {
+    return query(
+      `SELECT j.*
+       FROM jobs j
+       JOIN users u ON u.id = j.owner_user_id
+       WHERE j.matter_id = $1
+         AND u.org_id = $2
+       ORDER BY j.created_at DESC`,
+      [matterId, orgId],
       (row) => mapJob(row as Record<string, unknown>)
     );
   }
@@ -762,6 +852,19 @@ export class PostgresDocumentsRepo implements DocumentsRepo {
       (row) => mapDocument(row as Record<string, unknown>)
     );
   }
+
+  async getByIdForOrg(documentId: string, orgId: string): Promise<DocumentRecord | null> {
+    return queryOne(
+      `SELECT *
+       FROM documents
+       WHERE id = $1
+         AND org_id = $2
+         AND deleted_at IS NULL
+       LIMIT 1`,
+      [documentId, orgId],
+      (row) => mapDocument(row as Record<string, unknown>)
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -931,6 +1034,18 @@ export class PostgresDraftOutputsRepo implements DraftOutputsRepo {
     return queryOne(
       `SELECT * FROM draft_outputs WHERE job_id = $1 LIMIT 1`,
       [jobId],
+      (row) => mapDraftOutput(row as Record<string, unknown>)
+    );
+  }
+
+  async getByJobIdForOrg(jobId: string, orgId: string): Promise<DraftOutputRecord | null> {
+    return queryOne(
+      `SELECT *
+       FROM draft_outputs
+       WHERE job_id = $1
+         AND org_id = $2
+       LIMIT 1`,
+      [jobId, orgId],
       (row) => mapDraftOutput(row as Record<string, unknown>)
     );
   }

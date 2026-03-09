@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { execute, query, queryOne } from "@/src/server/db";
+import { execute, query, queryOne } from "../../src/server/db/index.ts";
 
 export interface StorageProvider {
   put(key: string, buf: Buffer): Promise<void>;

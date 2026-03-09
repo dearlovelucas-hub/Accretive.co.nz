@@ -1,22 +1,25 @@
-import { NextResponse } from "next/server";
-import { getDraftJob } from "@/lib/server/draftJobsStore";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
+import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request, context: { params: Promise<{ jobId: string }> }) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const { jobId } = await context.params;
-  const job = await getDraftJob(jobId);
-
-  if (!job) {
-    return NextResponse.json({ error: "Job not found." }, { status: 404 });
+  const access = await requireResourceAccess(auth.value, "job", jobId, "read");
+  if (!access.ok) {
+    return access.response;
   }
-  if (job.ownerUserId !== session.userId) {
+  const job = access.value;
+
+  const repos = getRepos();
+  const draft = await repos.drafts.getByIdForOrg(job.id, auth.value.orgId);
+  if (!draft || draft.ownerUserId !== auth.value.userId) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
@@ -25,9 +28,9 @@ export async function GET(request: Request, context: { params: Promise<{ jobId: 
       id: job.id,
       status: job.status,
       progress: job.progress,
-      templateFileName: job.templateFileName,
-      transactionFileNames: job.transactionFileNames,
-      termSheetFileName: job.termSheetFileName,
+      templateFileName: draft.templateFileName,
+      transactionFileNames: draft.transactionFileNames,
+      termSheetFileName: draft.termSheetFileName,
       updatedAt: job.updatedAt,
       errorMessage: job.errorMessage
     },

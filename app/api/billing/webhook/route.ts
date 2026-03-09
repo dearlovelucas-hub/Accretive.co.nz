@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server.js";
 import { setSubscriptionForUser } from "@/lib/server/subscriptions";
 
 export const runtime = "nodejs";

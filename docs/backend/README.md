@@ -45,6 +45,8 @@ See `.env.example` for required values:
 - `STORAGE_PROVIDER`
 - `CRON_SECRET`
 - `INTERNAL_JOBS_SECRET`
+- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS`
+- `ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS`
 
 ## Dashboard UI Draft
 

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/server/auth";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos";
 
 type ActivityItem = {
@@ -16,19 +16,19 @@ function toMillis(value: string): number {
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = getSessionFromRequest(request);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const repos = getRepos();
   const [templates, drafts, documents] = await Promise.all([
-    repos.templates.listByOwner(session.userId),
-    repos.drafts.listByOwner(session.userId),
-    repos.documents.listVisibleForUser(session.userId)
+    repos.templates.listByOwner(auth.value.userId),
+    repos.drafts.listByOwner(auth.value.userId),
+    repos.documents.listVisibleForUser(auth.value.userId)
   ]);
 
-  const jobs = await Promise.all(drafts.map((draft) => repos.jobs.getById(draft.id)));
+  const jobs = await Promise.all(drafts.map((draft) => repos.jobs.getByIdForOrg(draft.id, auth.value.orgId)));
 
   const draftEvents: ActivityItem[] = drafts
     .map((draft, index) => {

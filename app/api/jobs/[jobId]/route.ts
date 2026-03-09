@@ -1,32 +1,30 @@
-import { NextResponse } from "next/server";
-import { requireOrgSession } from "@/lib/server/orgAuth";
+import { NextResponse } from "next/server.js";
+import { requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request, { params }: { params: Promise<{ jobId: string }> }) {
-  const auth = await requireOrgSession(request);
+  const auth = await requireOrgMembership(request);
   if (!auth.ok) {
     return auth.response;
   }
-  const { session, orgId } = auth;
 
   const { jobId } = await params;
-
-  const repos = getRepos();
-  const job = await repos.jobs.getById(jobId);
-
-  if (!job) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const access = await requireResourceAccess(auth.value, "job", jobId, "read");
+  if (!access.ok) {
+    return access.response;
   }
 
-  if (job.ownerUserId !== session.userId) {
+  const repos = getRepos();
+  const job = await repos.jobs.getByIdForOrg(jobId, auth.value.orgId);
+  if (!job) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
   // Additional org-level check for matter-scoped jobs
   if (job.matterId) {
-    const matter = await repos.matters.findByIdAndOrg(job.matterId, orgId);
+    const matter = await repos.matters.findByIdAndOrg(job.matterId, auth.value.orgId);
     if (!matter) {
       return NextResponse.json({ error: "Not found." }, { status: 404 });
     }
