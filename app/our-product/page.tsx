@@ -1,9 +1,6 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import Container from "@/components/Container";
 import UploadDemo from "@/components/UploadDemo";
 import DemoRequestForm from "@/components/DemoRequestForm";
-import { getAuthCookieName, parseSessionToken } from "@/lib/server/auth";
 
 const workflowSteps = [
   { heading: "Upload your documents", body: "Drag and drop your precedent template and supporting transaction documents into the workspace. Word DOCX and PDF files are accepted." },
@@ -29,15 +26,7 @@ const securityBullets = [
   "The platform does not use uploaded documents to train models or improve its systems. Your precedents remain yours."
 ];
 
-export default async function ProductPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(getAuthCookieName())?.value;
-  const session = parseSessionToken(token);
-
-  if (session) {
-    redirect("/dashboard/drafting");
-  }
-
+export default function ProductPage() {
   return (
     <Container className="space-y-16 py-16">
       <section className="max-w-4xl">
