@@ -29,7 +29,7 @@ const documentWorkflows = [
   { title: "Board and Shareholder Resolutions", body: "Standard board resolutions approving transactions, security, and corporate steps. Shareholder resolutions for matters requiring member approval. Conditional drafting — sole director or multi-director forms — applied automatically." },
   { title: "Directors' Certificates", body: "Solvency certificates and other confirmations. The platform identifies the signing structure and selects the correct form — including whether to apply singular or plural director language throughout." },
   { title: "Disclosure Letters", body: "Qualified disclosure letters populated with specific disclosures drawn from the uploaded transaction materials and deal context provided by the solicitor." },
-  { title: "Loan and Security Documentation", body: "Facility letters, disclosure schedules, security documents, and ancillary certificates. Party details and security descriptions applied consistently across the full suite." },
+  { title: "Bulk Documentation", body: "Draft bulk document packs with ease. Upload a table of names and corresponding details, and Accretive produces as many replica documents as needed with consistency." },
   { title: "Schedules and Annexures", body: "Transaction schedules requiring consistent population across multiple documents. Property descriptions, party details, and commercial terms applied from a single set of transaction inputs." },
   { title: "Ancillary Transaction Documents", body: "Settlement statements, condition satisfaction notices, and execution materials. Prepared from the same deal context used across the rest of the transaction suite." }
 ];
