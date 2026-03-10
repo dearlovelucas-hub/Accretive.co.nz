@@ -33,7 +33,7 @@ export async function sendDemoRequestEmail(request: DemoRequestRecord): Promise<
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const fromAddress = process.env.RESEND_FROM_EMAIL?.trim() || "no-reply@accretive.co.nz";
 
-  if (!apiKey) {
+  if (!apiKey || apiKey === "your_resend_api_key") {
     throw new DemoRequestMailerError("not_configured", "RESEND_API_KEY is not configured.");
   }
 

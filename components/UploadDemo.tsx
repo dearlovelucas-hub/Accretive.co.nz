@@ -42,7 +42,7 @@ export default function UploadDemo() {
 
       <div className="flex flex-wrap items-center gap-3">
         <Link
-          href="/our-product#request-demo"
+          href="/platform#request-demo"
           className="rounded-full border border-[#10243F] bg-[#10243F] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
         >
           Book a live demo

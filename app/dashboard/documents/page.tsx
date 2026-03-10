@@ -10,10 +10,30 @@ type DocumentItem = {
   updatedAt: string;
 };
 
+function parseFilenameFromDisposition(disposition: string | null): string | null {
+  if (!disposition) {
+    return null;
+  }
+
+  const starMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (starMatch?.[1]) {
+    try {
+      return decodeURIComponent(starMatch[1]);
+    } catch {
+      return starMatch[1];
+    }
+  }
+
+  const standardMatch = disposition.match(/filename=\"?([^\";]+)\"?/i);
+  return standardMatch?.[1] ?? null;
+}
+
 export default function DocumentsPage() {
   const [items, setItems] = useState<DocumentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadError, setDownloadError] = useState("");
+  const [activeDownloadId, setActiveDownloadId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -22,7 +42,7 @@ export default function DocumentsPage() {
       try {
         setError("");
         setIsLoading(true);
-        const response = await fetch("/api/documents");
+        const response = await fetch("/api/documents", { credentials: "include" });
         const body = (await response.json().catch(() => null)) as { items?: DocumentItem[]; error?: string } | null;
 
         if (!response.ok) {
@@ -44,6 +64,41 @@ export default function DocumentsPage() {
     };
   }, []);
 
+  async function onDownloadDocument(item: DocumentItem) {
+    try {
+      setDownloadError("");
+      setActiveDownloadId(item.id);
+
+      const response = await fetch(`/api/draft-jobs/${encodeURIComponent(item.id)}/download`, {
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        const fallback = "Unable to download this document right now.";
+        const message = (await response.text().catch(() => fallback)) || fallback;
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const fileName =
+        parseFilenameFromDisposition(response.headers.get("Content-Disposition")) ??
+        `${item.name.replace(/[\\/:*?"<>|]+/g, " ").trim() || "document"}.docx`;
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (downloadFailure) {
+      setDownloadError(downloadFailure instanceof Error ? downloadFailure.message : "Unable to download this document right now.");
+    } finally {
+      setActiveDownloadId(null);
+    }
+  }
+
   return (
     <section className="space-y-8">
       <div>
@@ -53,6 +108,7 @@ export default function DocumentsPage() {
       </div>
 
       {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {downloadError && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{downloadError}</p>}
 
       {isLoading ? (
         <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">Loading documents...</p>
@@ -69,6 +125,7 @@ export default function DocumentsPage() {
                 <th className="px-4 py-3 font-medium">Template</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Updated</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e6eefb] bg-white text-slate-800">
@@ -78,6 +135,16 @@ export default function DocumentsPage() {
                   <td className="px-4 py-3">{doc.templateFileName}</td>
                   <td className="px-4 py-3 capitalize">{doc.status}</td>
                   <td className="px-4 py-3">{new Date(doc.updatedAt).toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => void onDownloadDocument(doc)}
+                      disabled={doc.status !== "complete" || activeDownloadId === doc.id}
+                      className="rounded-full border border-[#10243F] px-3 py-1.5 text-xs text-[#10243F] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {activeDownloadId === doc.id ? "Downloading..." : "Download DOCX"}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

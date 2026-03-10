@@ -18,7 +18,7 @@ Production-ready marketing site for Accretive built with Next.js App Router, Typ
 
 - `/` Home
 - `/request-demo`
-- `/our-product`
+- `/platform`
 - `/login`
 - `/dashboard/*` (authenticated client workspace)
 
@@ -126,7 +126,7 @@ npm run start
 ## Notes
 
 - Demo request form now submits to `POST /api/demo-requests`.
-- Upload demo on `/our-product` now creates and polls a real backend draft job.
+- Upload demo on `/platform` now creates and polls a real backend draft job.
 - Logged-in users access the app workspace at `/dashboard/*`.
 
 ## Billing Setup (Stub + Provider Hook Points)
