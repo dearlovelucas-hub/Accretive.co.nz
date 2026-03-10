@@ -2,7 +2,7 @@ const features = [
   {
     emoji: "🛡️",
     title: "Confidentiality",
-    body: "Every matter workspace is isolated. Documents uploaded to one matter are not accessible from another. Client materials are encrypted in transit and at rest."
+    body: "Every matter workspace is isolated. Documents uploaded to one matter are not accessible from another, and client materials are encrypted in transit and at rest."
   },
   {
     emoji: "🎯",
@@ -17,7 +17,7 @@ const features = [
   {
     emoji: "📋",
     title: "Familiar output",
-    body: "Every document is returned in Word DOCX format with tracked changes visible. Review and approval follow your firm's existing workflow — nothing needs to change."
+    body: "Every document is returned in Word DOCX format with tracked changes visible. Review and approval stay within your firm's existing workflow."
   }
 ];
 
@@ -26,8 +26,8 @@ export default function FeatureGrid() {
     <section className="py-20">
       <h2 className="text-3xl font-semibold text-[#10243F]">Why growing firms use Accretive</h2>
       <p className="mt-3 text-slate-700">
-        As transaction volume increases, so does the risk of drafting inconsistency. Accretive reduces that risk by
-        systematically applying transaction details to your firm&apos;s own precedents.
+        As transaction volume increases, so do the risks of drafting inconsistency and confidentiality drift. Accretive
+        reduces both by applying transaction details systematically within matter-level security boundaries.
       </p>
       <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
         {features.map((feature) => (

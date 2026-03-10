@@ -12,7 +12,7 @@ Frontend code in this project is everything needed to render the public website 
 
 ## Route Structure
 
-- Public marketing pages: `app/page.tsx`, `app/our-product/page.tsx`, `app/pricing/page.tsx`, `app/request-demo/page.tsx`
+- Public marketing pages: `app/page.tsx`, `app/platform/page.tsx`, `app/pricing/page.tsx`, `app/request-demo/page.tsx`
 - Supporting legal pages: `app/(frontend)/*`
 - Auth page: `app/login/page.tsx`
 - News pages: `app/news-and-releases/*`

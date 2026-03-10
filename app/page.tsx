@@ -8,19 +8,19 @@ import FeatureGrid from "@/components/FeatureGrid";
 import Modal from "@/components/Modal";
 
 const documentTypes = [
-  { title: "Board and Shareholder Resolutions", description: "Conditional drafting applied automatically — sole director or two-director forms selected based on transaction context." },
+  { title: "Board and Shareholder Resolutions", description: "Conditional drafting applied automatically — director, major transaction elections selected based on transaction context." },
   { title: "Directors' Certificates", description: "Solvency and confirmation certificates populated with company details, director names, and execution structure." },
+  { title: "Bulk Documentation", description: "Draft bulk document packs with ease. Upload a table of names and corresponding details, and Accretive produces as many replica documents as needed." },
   { title: "Disclosure Letters", description: "Standard disclosure letters incorporating specific disclosures drawn from uploaded transaction materials." },
   { title: "Loan and Security Documentation", description: "Facility letters, security documents, and ancillary certificates populated consistently across the full suite." },
-  { title: "Schedules and Annexures", description: "Transaction schedules requiring consistent party and property details applied across multiple documents." },
   { title: "Ancillary Transaction Documents", description: "Settlement statements, condition satisfaction notices, and execution materials prepared from deal context." }
 ];
 
 const valueAddItems = [
-  { label: "Populating precedent templates with transaction-specific details", type: "cross" as const },
-  { label: "Applying drafting elections across resolutions and certificates", type: "cross" as const },
-  { label: "Legal judgment, negotiation strategy, and advice to clients", type: "tick" as const },
-  { label: "Substantive review and sign-off before execution", type: "tick" as const }
+  { label: "Populating precedent templates with transaction-specific details", type: "tick" as const },
+  { label: "Applying drafting elections across resolutions and certificates", type: "tick" as const },
+  { label: "Legal judgment, negotiation strategy, and advice to clients", type: "cross" as const },
+  { label: "Substantive review and sign-off before execution", type: "cross" as const }
 ];
 
 export default function HomePage() {
@@ -37,21 +37,25 @@ export default function HomePage() {
         <section className="-mt-24 rounded-panel border border-[#d5e3fb] bg-white/90 p-6 shadow-panel md:-mt-28 md:p-8">
           <p className="text-sm uppercase tracking-[0.12em] text-[#355f95]">Built for growing law firms</p>
           <h2 className="mt-3 text-3xl font-semibold text-[#10243F] md:text-4xl">
-            Drafting support built for transactional practice
+            Drafting support built for secure transactional practice
           </h2>
           <p className="mt-4 max-w-3xl text-slate-700">
-            Accretive is a drafting platform for law firms. You upload your precedent template and the relevant transaction
-            documents. Accretive reads those materials, identifies the transaction details, and populates your template
-            accordingly. The output is a Word document — adjusted to the matter, returned to you for review before execution.
+            Accretive is a drafting platform for law firms. You upload your precedent template and transaction documents
+            into an isolated matter workspace. Accretive identifies transaction details and populates your template
+            accordingly. The output is a Word document adjusted to the matter and returned for lawyer review before
+            execution.
           </p>
           <p className="mt-3 max-w-3xl text-slate-700">
-            The platform assists your lawyers. It does not exercise legal judgment on your behalf.
+            The platform assists your lawyers. It does not exercise legal judgment on your behalf and does not use
+            uploaded documents to train models.
           </p>
         </section>
 
         <section className="py-16">
           <h3 className="text-2xl font-semibold text-[#10243F]">Document types</h3>
-          <p className="mt-2 text-slate-700">Typical workflows across commercial, property, and finance transactions.</p>
+          <p className="mt-2 text-slate-700">
+            Typical workflows across commercial, property, and finance transactions with matter-scoped document handling.
+          </p>
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
             {documentTypes.map((doc) => (
               <article
@@ -95,7 +99,8 @@ export default function HomePage() {
         <section className="mt-8 rounded-panel border border-[#bcd3f7] bg-gradient-to-r from-[#dce8fb] to-[#ebf3ff] p-6 text-center md:p-8">
           <h3 className="text-2xl font-semibold text-[#10243F]">See how it works with your own precedents</h3>
           <p className="mt-2 text-sm text-slate-700">
-            We offer a structured walkthrough using documents representative of your practice. No configuration required in advance.
+            We offer a structured walkthrough using documents representative of your practice, including security controls
+            and confidentiality safeguards. No configuration required in advance.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <Link

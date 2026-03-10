@@ -75,13 +75,22 @@ export default function Sidebar({ displayName }: { displayName: string }) {
   }
 
   return (
-    <aside className="flex w-full max-w-[260px] flex-col rounded-2xl border border-[#173254] bg-[#10243F] p-4 text-white shadow-panel">
-      <div className="border-b border-white/15 pb-4">
-        <p className="text-xs uppercase tracking-[0.12em] text-slate-300">Accretive Workspace</p>
-        <p className="mt-2 text-sm text-white">Signed in as {displayName}</p>
+    <aside className="flex w-full flex-col rounded-panel border border-[#d7e4fb] bg-white/80 p-4 text-[#10243F] shadow-[0_14px_36px_rgba(16,36,63,0.12)] backdrop-blur-xl lg:max-w-[280px]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#d7e4fb] pb-3 lg:block lg:pb-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Accretive Workspace</p>
+          <p className="mt-2 text-sm text-slate-700">Signed in as {displayName}</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-full border border-[#10243F] px-3 py-1.5 text-xs text-[#10243F] transition hover:bg-[#eef4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] lg:hidden"
+        >
+          Log out
+        </button>
       </div>
 
-      <nav className="mt-4 flex flex-1 flex-col gap-2" aria-label="Dashboard">
+      <nav className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:mt-4 lg:flex-1 lg:flex-col lg:overflow-visible lg:pb-0" aria-label="Dashboard">
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (
@@ -89,8 +98,10 @@ export default function Sidebar({ displayName }: { displayName: string }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
-                active ? "bg-white font-semibold text-[#0B1F4D]" : "text-slate-100 hover:bg-white/10"
+                "inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]",
+                active
+                  ? "border border-[#7fa8de] bg-[#d9eaff]/95 font-semibold text-[#10243F]"
+                  : "border border-transparent text-[#1f3657] hover:border-[#d7e4fb] hover:bg-[#eef4ff]"
               )}
               aria-current={active ? "page" : undefined}
             >
@@ -104,7 +115,7 @@ export default function Sidebar({ displayName }: { displayName: string }) {
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-4 rounded-lg border border-white/30 px-3 py-2 text-sm text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="mt-4 hidden rounded-full border border-[#10243F] px-3 py-2 text-sm text-[#10243F] transition hover:bg-[#eef4ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] lg:block"
       >
         Log out
       </button>

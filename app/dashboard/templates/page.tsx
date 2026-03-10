@@ -142,9 +142,10 @@ export default function TemplatesPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
+          <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
           <h1 className="text-2xl font-semibold text-[#10243F]">Templates</h1>
           <p className="mt-2 text-sm text-slate-700">Manage approved drafting templates used by your team.</p>
         </div>
@@ -152,24 +153,27 @@ export default function TemplatesPage() {
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33]"
+          className="inline-flex items-center gap-2 rounded-full border border-[#10243F] bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
         >
           <span aria-hidden="true">+</span>
           New template
         </button>
       </div>
 
-      {error && <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-600">Loading templates...</p>
+        <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">Loading templates...</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {items.length === 0 ? (
-            <p className="text-sm text-slate-600">No templates yet. Add your first template.</p>
+            <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">No templates yet. Add your first template.</p>
           ) : (
             items.map((template) => (
-              <article key={template.id} className="rounded-xl border border-slate-300 p-4">
+              <article
+                key={template.id}
+                className="rounded-panel border border-[#d7e4fb] bg-gradient-to-b from-white to-[#f8fbff] p-4 shadow-[0_10px_24px_rgba(16,36,63,0.08)]"
+              >
                 <h2 className="font-medium text-slate-900">{displayTemplateName(template)}</h2>
                 <p className="mt-1 text-xs text-slate-600">File: {template.fileName}</p>
                 <p className="mt-1 text-xs text-slate-600">Updated: {new Date(template.updatedAt).toLocaleString()}</p>
@@ -177,7 +181,7 @@ export default function TemplatesPage() {
                   <button
                     type="button"
                     onClick={() => void onPreviewTemplate(template)}
-                    className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                    className="rounded-full border border-[#d7e4fb] bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-[#eef4ff]"
                   >
                     Preview template
                   </button>
@@ -189,8 +193,8 @@ export default function TemplatesPage() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1220]/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel">
             <h3 className="text-lg font-semibold text-[#10243F]">Add new template</h3>
             <p className="mt-1 text-sm text-slate-700">Upload a DOCX or PDF to use as a base template.</p>
 
@@ -200,7 +204,7 @@ export default function TemplatesPage() {
                 <input
                   value={templateName}
                   onChange={(event) => setTemplateName(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900"
+                  className="w-full rounded-lg border border-[#d7e4fb] bg-[#f8fbff] px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
                 />
               </label>
 
@@ -211,7 +215,7 @@ export default function TemplatesPage() {
                   type="file"
                   accept=".docx,.pdf"
                   onChange={(event) => setTemplateFile(event.target.files?.[0] ?? null)}
-                  className="block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-800 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-slate-200 file:px-3 file:py-1.5"
+                  className="block w-full rounded-lg border border-[#d7e4fb] bg-[#f8fbff] px-3 py-2 text-sm text-slate-800 file:mr-3 file:rounded-md file:border file:border-[#d7e4fb] file:bg-white file:px-3 file:py-1.5"
                 />
               </label>
 
@@ -219,14 +223,14 @@ export default function TemplatesPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-full bg-[#10243F] px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full border border-[#10243F] bg-[#10243F] px-4 py-2 text-sm text-white transition hover:bg-[#0d1d33] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSubmitting ? "Saving..." : "Save template"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700"
+                  className="rounded-full border border-[#d7e4fb] px-4 py-2 text-sm text-slate-700 transition hover:bg-[#eef4ff]"
                 >
                   Cancel
                 </button>
@@ -237,8 +241,8 @@ export default function TemplatesPage() {
       )}
 
       {previewTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-3xl rounded-xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1220]/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-[#10243F]">{displayTemplateName(previewTemplate)}</h3>
@@ -247,13 +251,13 @@ export default function TemplatesPage() {
               <button
                 type="button"
                 onClick={closePreview}
-                className="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-700 transition hover:bg-slate-100"
+                className="rounded-full border border-[#d7e4fb] px-3 py-1 text-sm text-slate-700 transition hover:bg-[#eef4ff]"
               >
                 Close
               </button>
             </div>
 
-            <div className="mt-4 max-h-[50vh] overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
+            <div className="mt-4 max-h-[50vh] overflow-auto rounded-lg border border-[#d7e4fb] bg-[#f8fbff] p-4">
               {isPreviewLoading ? (
                 <p className="text-sm text-slate-600">Loading preview...</p>
               ) : previewError ? (
@@ -269,7 +273,7 @@ export default function TemplatesPage() {
               <button
                 type="button"
                 onClick={() => onUseTemplateForDrafting(previewTemplate.id)}
-                className="rounded-full bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33]"
+                className="rounded-full border border-[#10243F] bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33]"
               >
                 Use this template in Drafting
               </button>

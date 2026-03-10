@@ -13,7 +13,6 @@ export type DemoRequestRecord = {
   currentProcess: string;
   securityRequirements: string[];
   notes: string;
-  consent: boolean;
   submittedAt: string;
 };
 
@@ -36,7 +35,6 @@ function mapRow(row: Record<string, unknown>): DemoRequestRecord {
       ? row.security_requirements.map((value) => String(value))
       : [],
     notes: String(row.notes),
-    consent: Boolean(row.consent),
     submittedAt: toIso(row.submitted_at)
   };
 }
@@ -70,7 +68,7 @@ export async function createDemoRequest(input: Omit<DemoRequestRecord, "id" | "s
       input.currentProcess,
       input.securityRequirements,
       input.notes,
-      input.consent
+      true
     ],
     (row) => mapRow(row as Record<string, unknown>)
   );

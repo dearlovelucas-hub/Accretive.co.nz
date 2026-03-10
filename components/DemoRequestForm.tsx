@@ -13,7 +13,6 @@ type FormState = {
   currentProcess: string;
   securityRequirements: string[];
   notes: string;
-  consent: boolean;
 };
 
 const roles = [
@@ -40,8 +39,7 @@ const initialState: FormState = {
   docTypes: "",
   currentProcess: "",
   securityRequirements: [],
-  notes: "",
-  consent: false
+  notes: ""
 };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,7 +53,7 @@ export default function DemoRequestForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = useMemo(
-    () => Boolean(form.fullName.trim() && emailRegex.test(form.email) && form.organisation.trim() && form.consent),
+    () => Boolean(form.fullName.trim() && emailRegex.test(form.email) && form.organisation.trim()),
     [form]
   );
 
@@ -76,7 +74,6 @@ export default function DemoRequestForm() {
     if (!form.email.trim()) nextErrors.email = "Work email is required.";
     else if (!emailRegex.test(form.email)) nextErrors.email = "Enter a valid email address.";
     if (!form.organisation.trim()) nextErrors.organisation = "Firm or organisation is required.";
-    if (!form.consent) nextErrors.consent = "Consent is required.";
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -94,31 +91,26 @@ export default function DemoRequestForm() {
 
     try {
       setIsSubmitting(true);
+      const response = await fetch("/api/demo-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
+      });
 
-      const lines = [
-        `Full name: ${form.fullName}`,
-        `Work email: ${form.email}`,
-        `Organisation: ${form.organisation}`,
-        `Role: ${form.role || "-"}`,
-        `Practice area: ${form.practiceAreas.join(", ") || "-"}`,
-        `Firm size: ${form.firmSize || "-"}`,
-        `Document types: ${form.docTypes || "-"}`,
-        `Current process: ${form.currentProcess || "-"}`,
-        `Security requirements: ${form.securityRequirements.join(", ") || "-"}`,
-        `Notes: ${form.notes || "-"}`
-      ];
+      const body = (await response.json().catch(() => null)) as
+        | { error?: string; warning?: string; notificationStatus?: string }
+        | null;
+      if (!response.ok) {
+        setSubmitError(body?.error ?? "Unable to submit your request right now.");
+        return;
+      }
 
-      const mailto = `mailto:lucas@accretive.co.nz?subject=${encodeURIComponent(
-        "Accretive demo request"
-      )}&body=${encodeURIComponent(lines.join("\n"))}`;
-
-      window.location.href = mailto;
-      setSuccessMessage("Your email draft has been prepared. Please send it to complete your demo request.");
-      setToastMessage("Demo request email prepared.");
+      setSuccessMessage(body?.warning ?? "Your request has been submitted. We will contact you shortly.");
+      setToastMessage("Demo request submitted.");
       setForm(initialState);
       window.setTimeout(() => setToastMessage(""), 3200);
     } catch {
-      setSubmitError("Unable to open your email app. Please contact lucas@accretive.co.nz directly.");
+      setSubmitError("Unable to submit your request right now. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -267,18 +259,6 @@ export default function DemoRequestForm() {
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
           />
         </label>
-
-        <label className="flex items-start gap-2 text-sm text-slate-700">
-          <input
-            required
-            type="checkbox"
-            checked={form.consent}
-            onChange={(event) => setForm({ ...form, consent: event.target.checked })}
-            className="mt-1 h-4 w-4 rounded border-slate-300 bg-white accent-[#10243F]"
-          />
-          I agree to be contacted about a demo.
-        </label>
-        {errors.consent && <span className="-mt-6 block text-sm text-rose-300">{errors.consent}</span>}
 
         <button
           type="submit"

@@ -18,7 +18,7 @@ Production-ready marketing site for Accretive built with Next.js App Router, Typ
 
 - `/` Home
 - `/request-demo`
-- `/our-product`
+- `/platform`
 - `/login`
 - `/dashboard/*` (authenticated client workspace)
 
@@ -126,7 +126,7 @@ npm run start
 ## Notes
 
 - Demo request form now submits to `POST /api/demo-requests`.
-- Upload demo on `/our-product` now creates and polls a real backend draft job.
+- Upload demo on `/platform` now creates and polls a real backend draft job.
 - Logged-in users access the app workspace at `/dashboard/*`.
 
 ## Billing Setup (Stub + Provider Hook Points)
@@ -142,12 +142,14 @@ Environment variables are documented in `.env.example`:
 - `STRIPE_WEBHOOK_SECRET`
 - `BILLING_WEBHOOK_SECRET`
 - `BILLING_STUB_AUTO_ACTIVATE`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
 - `NEXT_PUBLIC_APP_URL`
 - `STORAGE_PROVIDER` (`database` recommended on Vercel)
 - `CRON_SECRET` (recommended for `/api/internal/jobs/run-next` cron auth)
 - `INTERNAL_JOBS_SECRET` (optional manual runner trigger secret)
 - `ACCRETIVE_DB_SCHEMA` (optional, useful for test isolation)
-- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS` (optional, defaults to `10`, set `0` to disable)
+- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS` (optional, defaults to `10` in production and `0` in development/test; set `0` to disable)
 - `ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS` (optional, defaults to `86400000` = 24h)
 
 LLM generation:

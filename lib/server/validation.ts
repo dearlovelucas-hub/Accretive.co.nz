@@ -25,7 +25,6 @@ export type DemoRequestInput = {
   currentProcess: string;
   securityRequirements: string[];
   notes: string;
-  consent: boolean;
 };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,7 +45,6 @@ export function validateDemoRequest(input: unknown):
   const docTypes = String(candidate.docTypes ?? "").trim();
   const currentProcess = String(candidate.currentProcess ?? "").trim();
   const notes = String(candidate.notes ?? "").trim();
-  const consent = Boolean(candidate.consent);
   const practiceAreas = Array.isArray(candidate.practiceAreas)
     ? candidate.practiceAreas.map((value) => String(value))
     : [];
@@ -57,7 +55,6 @@ export function validateDemoRequest(input: unknown):
   if (!fullName) return { success: false, message: "Full name is required." };
   if (!email || !emailRegex.test(email)) return { success: false, message: "Valid work email is required." };
   if (!organisation) return { success: false, message: "Firm or organisation is required." };
-  if (!consent) return { success: false, message: "Consent is required." };
   if (!allowedRoles.has(role)) return { success: false, message: "Invalid role." };
   if (!allowedFirmSizes.has(firmSize)) return { success: false, message: "Invalid firm size." };
   if (practiceAreas.some((area) => !allowedPracticeAreas.has(area))) {
@@ -79,8 +76,7 @@ export function validateDemoRequest(input: unknown):
       docTypes,
       currentProcess,
       securityRequirements,
-      notes,
-      consent
+      notes
     }
   };
 }
