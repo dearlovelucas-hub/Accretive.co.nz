@@ -8,11 +8,11 @@ import FeatureGrid from "@/components/FeatureGrid";
 import Modal from "@/components/Modal";
 
 const documentTypes = [
-  { title: "Board and Shareholder Resolutions", description: "Conditional drafting applied automatically — sole director or two-director forms selected based on transaction context." },
+  { title: "Board and Shareholder Resolutions", description: "Conditional drafting applied automatically — director, major transaction elections selected based on transaction context." },
   { title: "Directors' Certificates", description: "Solvency and confirmation certificates populated with company details, director names, and execution structure." },
+  { title: "Bulk Documentation", description: "Draft bulk document packs with ease. Upload a table of names and corresponding details, and Accretive produces as many replica documents as needed." },
   { title: "Disclosure Letters", description: "Standard disclosure letters incorporating specific disclosures drawn from uploaded transaction materials." },
   { title: "Loan and Security Documentation", description: "Facility letters, security documents, and ancillary certificates populated consistently across the full suite." },
-  { title: "Schedules and Annexures", description: "Transaction schedules requiring consistent party and property details applied across multiple documents." },
   { title: "Ancillary Transaction Documents", description: "Settlement statements, condition satisfaction notices, and execution materials prepared from deal context." }
 ];
 
