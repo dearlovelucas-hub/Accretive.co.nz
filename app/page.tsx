@@ -17,10 +17,10 @@ const documentTypes = [
 ];
 
 const valueAddItems = [
-  { label: "Populating precedent templates with transaction-specific details", type: "cross" as const },
-  { label: "Applying drafting elections across resolutions and certificates", type: "cross" as const },
-  { label: "Legal judgment, negotiation strategy, and advice to clients", type: "tick" as const },
-  { label: "Substantive review and sign-off before execution", type: "tick" as const }
+  { label: "Populating precedent templates with transaction-specific details", type: "tick" as const },
+  { label: "Applying drafting elections across resolutions and certificates", type: "tick" as const },
+  { label: "Legal judgment, negotiation strategy, and advice to clients", type: "cross" as const },
+  { label: "Substantive review and sign-off before execution", type: "cross" as const }
 ];
 
 export default function HomePage() {
