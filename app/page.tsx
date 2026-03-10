@@ -46,7 +46,7 @@ export default function HomePage() {
             execution.
           </p>
           <p className="mt-3 max-w-3xl text-slate-700">
-            The platform assists your lawyers. It does not exercise legal judgment on your behalf and does not use
+            Accretive assists your lawyers. It does not exercise legal judgment on your behalf and does not use
             uploaded documents to train models.
           </p>
         </section>
