@@ -37,7 +37,10 @@ export default function PricingPage() {
     <main className="min-h-screen bg-white px-6 py-14">
       <section className="mx-auto max-w-4xl">
         <h1 className="text-4xl font-semibold text-[#10243F]">Pricing</h1>
-        <p className="mt-3 text-slate-700">Upgrade to unlock full generated draft output and downloads.</p>
+        <p className="mt-3 text-slate-700">
+          Upgrade to unlock full generated draft output and downloads, with the same matter-isolated security controls
+          across plans.
+        </p>
 
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
           <article className="rounded-2xl border border-slate-300 p-6">

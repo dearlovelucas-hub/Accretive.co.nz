@@ -45,22 +45,25 @@ export default function DocumentsPage() {
   }, []);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <div>
+        <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
         <h1 className="text-2xl font-semibold text-[#10243F]">My documents</h1>
         <p className="mt-2 text-sm text-slate-700">Generated drafts and work in progress.</p>
       </div>
 
-      {error && <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-600">Loading documents...</p>
+        <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">Loading documents...</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-slate-600">No documents yet. Generate your first draft in Drafting.</p>
+        <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">
+          No documents yet. Generate your first draft in Drafting.
+        </p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-300">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50 text-left text-slate-700">
+        <div className="overflow-hidden rounded-panel border border-[#d7e4fb] bg-white shadow-[0_10px_24px_rgba(16,36,63,0.08)]">
+          <table className="min-w-full divide-y divide-[#dfe9fa] text-sm">
+            <thead className="bg-[#f4f8ff] text-left text-slate-700">
               <tr>
                 <th className="px-4 py-3 font-medium">Document</th>
                 <th className="px-4 py-3 font-medium">Template</th>
@@ -68,9 +71,9 @@ export default function DocumentsPage() {
                 <th className="px-4 py-3 font-medium">Updated</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white text-slate-800">
+            <tbody className="divide-y divide-[#e6eefb] bg-white text-slate-800">
               {items.map((doc) => (
-                <tr key={doc.id}>
+                <tr key={doc.id} className="hover:bg-[#f8fbff]">
                   <td className="px-4 py-3">{doc.name}</td>
                   <td className="px-4 py-3">{doc.templateFileName}</td>
                   <td className="px-4 py-3 capitalize">{doc.status}</td>

@@ -8,7 +8,7 @@ export default function Hero({ onWatchDemo }: { onWatchDemo: () => void }) {
           Spend more time with clients, not buried in legal documents
         </p>
         <p className="mt-6 text-base text-slate-700 md:text-lg">
-          Draft with structure. Advise with confidence.
+          Draft with structure. Protect client confidentiality.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <button

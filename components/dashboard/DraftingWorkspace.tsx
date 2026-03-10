@@ -512,18 +512,19 @@ export default function DraftingWorkspace() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <div>
+        <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
         <h1 className="text-2xl font-semibold text-[#10243F]">Drafting</h1>
         <p className="mt-2 text-sm text-slate-700">Create transaction drafts from templates and deal context.</p>
       </div>
 
       {billingNotice && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{billingNotice}</p>
+        <p className="rounded-panel border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{billingNotice}</p>
       )}
 
       {stage === "complete" ? (
-        <section className="rounded-xl border border-slate-300 bg-slate-50 p-4">
+        <section className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4">
           <h2 className="text-sm font-semibold text-[#10243F]">Inputs used for this draft</h2>
           <p className="mt-2 text-xs text-slate-700">
             Template: <span className="font-medium">{templateFile?.name ?? "Uploaded template"}</span>
@@ -541,10 +542,10 @@ export default function DraftingWorkspace() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <label className="block rounded-xl border border-slate-300 p-4">
+            <label className="block rounded-panel border border-[#d7e4fb] bg-gradient-to-b from-white to-[#f8fbff] p-4 shadow-[0_10px_24px_rgba(16,36,63,0.08)]">
               <span className="text-sm font-medium text-[#10243F]">Template document (DOCX/PDF) *</span>
               <input
-                className="mt-3 block w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-slate-200 file:px-3 file:py-1.5 file:text-slate-700"
+                className="mt-3 block w-full rounded-lg border border-[#d7e4fb] bg-[#f8fbff] px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-[#d7e4fb] file:bg-white file:px-3 file:py-1.5 file:text-slate-700"
                 type="file"
                 accept=".docx,.pdf"
                 onChange={(event) => {
@@ -561,10 +562,10 @@ export default function DraftingWorkspace() {
               )}
             </label>
 
-            <label className="block rounded-xl border border-slate-300 p-4">
+            <label className="block rounded-panel border border-[#d7e4fb] bg-gradient-to-b from-white to-[#f8fbff] p-4 shadow-[0_10px_24px_rgba(16,36,63,0.08)]">
               <span className="text-sm font-medium text-[#10243F]">Transaction Documents / Term Sheet *</span>
               <input
-                className="mt-3 block w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-slate-200 file:px-3 file:py-1.5 file:text-slate-700"
+                className="mt-3 block w-full rounded-lg border border-[#d7e4fb] bg-[#f8fbff] px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-[#d7e4fb] file:bg-white file:px-3 file:py-1.5 file:text-slate-700"
                 type="file"
                 multiple
                 onChange={(event) => setTransactionDocs(Array.from(event.target.files ?? []))}
@@ -581,7 +582,7 @@ export default function DraftingWorkspace() {
               rows={5}
               value={dealInfo}
               onChange={(event) => setDealInfo(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F]"
+              className="mt-2 w-full rounded-panel border border-[#d7e4fb] bg-[#f8fbff] px-3 py-2 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
               placeholder="Key commercial details, signing structure, and elections..."
             />
           </label>
@@ -591,7 +592,7 @@ export default function DraftingWorkspace() {
               type="button"
               onClick={onGenerateDraft}
               disabled={!canGenerate}
-              className="rounded-full bg-[#10243F] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10243F] disabled:cursor-not-allowed disabled:opacity-45"
+              className="rounded-full border border-[#10243F] bg-[#10243F] px-6 py-3 text-sm font-medium text-white transition hover:bg-[#0d1d33] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] disabled:cursor-not-allowed disabled:opacity-45"
             >
               {stage === "processing" ? "Generating..." : "Generate document"}
             </button>
@@ -602,12 +603,12 @@ export default function DraftingWorkspace() {
         </>
       )}
 
-      {error && <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {stage === "processing" && (
-        <div className="rounded-lg border border-slate-300 p-4">
+        <div className="rounded-panel border border-[#d7e4fb] bg-white p-4">
           <p className="text-sm text-slate-700">Processing drafting job...</p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#dce8fb]">
             <div className="h-full rounded-full bg-[#10243F] transition-all" style={{ width: `${progress}%` }} />
           </div>
           <p className="mt-1 text-xs text-slate-600">{progress}%</p>
@@ -615,7 +616,7 @@ export default function DraftingWorkspace() {
       )}
 
       {stage === "complete" && (
-        <section className="space-y-4 rounded-xl border border-slate-300 bg-slate-50 p-4">
+        <section className="space-y-4 rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-medium text-[#10243F]">Generated output</h2>
             {resultLoading && <span className="text-xs text-slate-600">Loading output...</span>}
@@ -623,8 +624,8 @@ export default function DraftingWorkspace() {
 
           {draftResult && (
             <>
-              <div className="overflow-hidden rounded-xl border border-slate-300 bg-[#f3f4f6]">
-                <div className="flex items-center justify-between border-b border-slate-300 bg-[#e5e7eb] px-4 py-2">
+              <div className="overflow-hidden rounded-panel border border-[#d7e4fb] bg-[#f4f8ff]">
+                <div className="flex items-center justify-between border-b border-[#d7e4fb] bg-[#e7f0ff] px-4 py-2">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
                     <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
@@ -635,7 +636,7 @@ export default function DraftingWorkspace() {
                 </div>
 
                 <div className="max-h-[540px] overflow-auto p-6">
-                  <div className="mx-auto min-h-[680px] w-full max-w-[760px] rounded-sm border border-slate-300 bg-white p-10 shadow-sm">
+                  <div className="mx-auto min-h-[680px] w-full max-w-[760px] rounded-sm border border-[#d7e4fb] bg-white p-10 shadow-sm">
                     <pre className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{draftResult.content}</pre>
                   </div>
                 </div>
@@ -662,7 +663,7 @@ export default function DraftingWorkspace() {
                   type="button"
                   onClick={onDownloadComparisonPdf}
                   disabled={!jobId || comparisonDownloadLoading}
-                  className="rounded-full border border-[#10243F] px-4 py-2 text-sm text-[#10243F] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-full border border-[#10243F] px-4 py-2 text-sm text-[#10243F] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {comparisonDownloadLoading ? "Building comparison..." : "Download comparison PDF"}
                 </button>
@@ -720,8 +721,8 @@ export default function DraftingWorkspace() {
       )}
 
       {isBillingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 text-slate-900 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1220]/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-panel border border-[#d7e4fb] bg-white p-6 text-slate-900 shadow-panel">
             <h3 className="text-lg font-semibold text-[#10243F]">Connect billing</h3>
             <p className="mt-2 text-sm text-slate-700">
               Select a payment method before generating a document.
@@ -734,7 +735,7 @@ export default function DraftingWorkspace() {
                 className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
                   billingMethod === "credit_charge"
                     ? "border-[#10243F] bg-[#10243F] text-white"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                    : "border-[#d7e4fb] bg-white text-slate-700 hover:bg-[#eef4ff]"
                 }`}
               >
                 Credit charge
@@ -745,7 +746,7 @@ export default function DraftingWorkspace() {
                 className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
                   billingMethod === "internet_banking"
                     ? "border-[#10243F] bg-[#10243F] text-white"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                    : "border-[#d7e4fb] bg-white text-slate-700 hover:bg-[#eef4ff]"
                 }`}
               >
                 Internet banking
@@ -756,14 +757,14 @@ export default function DraftingWorkspace() {
                 className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
                   billingMethod === "direct_debit"
                     ? "border-[#10243F] bg-[#10243F] text-white"
-                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                    : "border-[#d7e4fb] bg-white text-slate-700 hover:bg-[#eef4ff]"
                 }`}
               >
                 Direct debit
               </button>
             </div>
 
-            <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <div className="mt-4 rounded-lg border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-700">
               {billingMethod === "credit_charge" && (
                 <>
                   <p className="font-medium text-[#10243F]">Credit charge</p>
@@ -794,14 +795,14 @@ export default function DraftingWorkspace() {
                 type="button"
                 onClick={onConnectBilling}
                 disabled={billingActionLoading}
-                className="rounded-full bg-[#10243F] px-4 py-2 text-sm text-white transition hover:bg-[#0d1d33] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-[#10243F] bg-[#10243F] px-4 py-2 text-sm text-white transition hover:bg-[#0d1d33] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {billingActionLoading ? "Connecting..." : "Connect billing"}
               </button>
               <button
                 type="button"
                 onClick={() => setIsBillingModalOpen(false)}
-                className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+                className="rounded-full border border-[#d7e4fb] px-4 py-2 text-sm text-slate-700 transition hover:bg-[#eef4ff]"
               >
                 Cancel
               </button>

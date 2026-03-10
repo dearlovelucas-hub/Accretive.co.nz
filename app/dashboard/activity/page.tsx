@@ -82,22 +82,28 @@ export default function ActivityPage() {
   }, []);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <div>
+        <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
         <h1 className="text-2xl font-semibold text-[#10243F]">Activity</h1>
         <p className="mt-2 text-sm text-slate-700">Recent drafting and workspace events.</p>
       </div>
 
-      {error && <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-600">Loading activity...</p>
+        <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">Loading activity...</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-slate-600">No activity yet. Start drafting or upload a template to see events here.</p>
+        <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">
+          No activity yet. Start drafting or upload a template to see events here.
+        </p>
       ) : (
         <ul className="space-y-3">
           {items.map((item) => (
-            <li key={item.id} className="rounded-xl border border-slate-300 p-4">
+            <li
+              key={item.id}
+              className="rounded-panel border border-[#d7e4fb] bg-gradient-to-b from-white to-[#f8fbff] p-4 shadow-[0_10px_24px_rgba(16,36,63,0.06)]"
+            >
               <p className="text-sm text-slate-900">{item.text}</p>
               <p className="mt-1 text-xs text-slate-600">{formatRelativeTime(item.occurredAt)}</p>
             </li>

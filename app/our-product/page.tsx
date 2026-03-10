@@ -3,11 +3,26 @@ import UploadDemo from "@/components/UploadDemo";
 import DemoRequestForm from "@/components/DemoRequestForm";
 
 const workflowSteps = [
-  { heading: "Upload your documents", body: "Drag and drop your precedent template and supporting transaction documents into the workspace. Word DOCX and PDF files are accepted." },
-  { heading: "Add deal context", body: "Provide any additional transaction details — party names, key dates, commercial elections — that may not appear in the uploaded documents." },
-  { heading: "The platform reads and identifies", body: "Accretive reads the transaction documents and maps the relevant information to the fields and drafting logic in your template, including conditional clauses." },
-  { heading: "Missing information is flagged", body: "If the uploaded documents do not contain enough detail to complete a particular field, the platform asks before proceeding." },
-  { heading: "Your document is returned", body: "You receive a completed Word document with all changes tracked. Review every amendment before the document leaves the firm." }
+  {
+    heading: "Securely upload your documents",
+    body: "Upload your precedent template and supporting transaction documents into an isolated matter workspace. Word DOCX and PDF files are accepted, with encryption in transit and at rest."
+  },
+  {
+    heading: "Add deal context with controlled access",
+    body: "Provide additional transaction details - party names, key dates, and commercial elections - that may not appear in the uploaded documents. Access remains scoped to your firm account and the active matter."
+  },
+  {
+    heading: "The platform reads and identifies",
+    body: "Accretive maps relevant information from transaction documents to the fields and drafting logic in your template, including conditional clauses. Uploaded materials are used only for your drafting task."
+  },
+  {
+    heading: "Missing information is flagged before drafting",
+    body: "If uploaded documents do not contain enough detail to complete a field, the platform prompts before proceeding so your team can decide how to handle it."
+  },
+  {
+    heading: "Your document is returned for review",
+    body: "You receive a completed Word document with tracked changes visible. Lawyers review every amendment before the document leaves the firm."
+  }
 ];
 
 const documentWorkflows = [
@@ -30,14 +45,10 @@ export default function ProductPage() {
   return (
     <Container className="space-y-16 py-16">
       <section className="max-w-4xl">
-        <h1 className="text-4xl font-semibold text-[#10243F]">The Accretive platform</h1>
+        <h1 className="text-4xl font-semibold text-[#10243F]">Your first call for drafting</h1>
         <p className="mt-4 text-lg text-slate-700">
-          A workspace for preparing transactional documents from your firm&apos;s existing precedents.
-        </p>
-        <p className="mt-3 text-slate-700">
-          You bring your own template documents and transaction materials. The platform reads them and returns a populated
-          Word file. There is no configuration required — Accretive reads your precedent as-is and identifies the fields,
-          conditional logic, and variable clauses within it.
+          Accretive helps legal teams produce first drafts faster by combining your precedent templates with
+          matter-specific context from supporting documents.
         </p>
       </section>
 
@@ -65,8 +76,8 @@ export default function ProductPage() {
       <section className="rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel md:p-8">
         <h2 className="text-2xl font-semibold text-[#10243F]">Typical document workflows</h2>
         <p className="mt-3 text-slate-700">
-          Accretive is designed for the types of documents that appear regularly in commercial, property, and finance
-          transactions.
+          Accretive is designed for the documents that appear regularly in commercial, property, and finance transactions,
+          with consistent matter-level security controls across each workflow.
         </p>
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           {documentWorkflows.map((doc) => (
@@ -85,8 +96,8 @@ export default function ProductPage() {
           exactly what has been amended before the document is sent or executed.
         </p>
         <p className="mt-3 text-slate-700">
-          Accretive produces a first draft, adjusted to the transaction. Your lawyers review and approve it. The platform
-          does not produce a finalised, execution-ready document.
+          Accretive produces a first draft, adjusted to the transaction, inside your firm workspace. Your lawyers review
+          and approve it. The platform does not produce a finalised, execution-ready document.
         </p>
       </section>
 
@@ -112,8 +123,8 @@ export default function ProductPage() {
         <header className="max-w-3xl">
           <h2 className="text-2xl font-semibold text-[#10243F]">Book a walkthrough</h2>
           <p className="mt-3 text-slate-700">
-            We offer a structured walkthrough using documents representative of your practice. No configuration is
-            required in advance.
+            We offer a structured walkthrough using documents representative of your practice, including a review of
+            matter isolation, encryption, and access controls. No configuration is required in advance.
           </p>
         </header>
 
