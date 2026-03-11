@@ -25,7 +25,7 @@ export default function BrandLogo({
       />
       {showWordmark ? (
         <span className={cn("font-[var(--font-wordmark)] text-3xl font-semibold tracking-tight", wordmarkClassName)}>
-          accretive
+          Accretive
         </span>
       ) : null}
     </span>
