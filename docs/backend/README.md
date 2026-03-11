@@ -20,6 +20,7 @@ Backend code in this project handles auth, billing, draft generation, data persi
 - Billing: `/api/billing/*`
 - Activity and matter workflows: `/api/activity`, `/api/matters/*`, `/api/jobs/*`
 - Internal worker: `/api/internal/jobs/run-next` (queue processor for serverless deployments)
+  - Response includes queue-run stats and timing (`maxJobs`, `startedAt`, `finishedAt`, `durationMs`, backlog and processing counters).
 
 ## Data Layer
 
