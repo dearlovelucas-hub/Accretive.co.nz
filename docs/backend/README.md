@@ -50,6 +50,10 @@ See `.env.example` for required values:
 - `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS`
 - `ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS`
 
+Notes:
+- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS=0` disables DB throttling (recommended default for normal operation).
+- If enabled, make sure the window and request count are high enough for job polling and queue processing workloads.
+
 ## Dashboard UI Draft
 
 Backend-facing dashboard scope and API contracts are documented in:
