@@ -85,7 +85,7 @@ export function getEnv(): AppEnv {
   const DB_RATE_LIMIT_MAX_REQUESTS = parseNonNegativeInteger(
     "ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS",
     process.env.ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS,
-    process.env.NODE_ENV === "production" ? 10 : 0
+    0
   );
   const DB_RATE_LIMIT_WINDOW_MS = parsePositiveInteger(
     "ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS",

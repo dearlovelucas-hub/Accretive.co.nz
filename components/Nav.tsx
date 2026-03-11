@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -32,9 +33,12 @@ export default function Nav() {
           <div className="flex h-16 items-center justify-between px-4 md:px-6">
             <Link
               href="/"
-              className="inline-flex items-center text-3xl font-semibold tracking-tight text-[#10243F] transition hover:text-[#355f95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95] md:text-4xl font-[var(--font-wordmark)]"
+              className="inline-flex items-center text-[#10243F] transition hover:text-[#355f95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355f95]"
             >
-              Accretive
+              <BrandLogo
+                markClassName="h-9 w-9"
+                wordmarkClassName="text-[2rem] leading-none text-current md:text-[2.2rem]"
+              />
             </Link>
             <nav aria-label="Primary" className="flex items-center gap-2 overflow-x-auto">
               {links.map((link) => {

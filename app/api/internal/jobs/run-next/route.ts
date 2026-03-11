@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server.js";
 import { runQueuedJobs } from "@/lib/server/jobRunner";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 function isAuthorized(request: NextRequest): { ok: boolean; reason?: string } {
   const cronSecret = process.env.CRON_SECRET?.trim();

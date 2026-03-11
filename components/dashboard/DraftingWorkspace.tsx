@@ -213,10 +213,13 @@ export default function DraftingWorkspace() {
     clearPollingInterval();
     intervalRef.current = window.setInterval(async () => {
       try {
-        const response = await fetch(`/api/draft-jobs/${nextJobId}`);
+        const response = await fetch(`/api/draft-jobs/${nextJobId}`, {
+          credentials: "include"
+        });
         if (!response.ok) {
           const body = (await response.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? "Unable to fetch job status.");
+          const detail = body?.error ? `: ${body.error}` : "";
+          throw new Error(`Unable to fetch job status (HTTP ${response.status}${detail}).`);
         }
         const body = (await response.json()) as { status: string; progress: number; errorMessage?: string };
 
@@ -237,7 +240,7 @@ export default function DraftingWorkspace() {
         setStage("idle");
         clearPollingInterval();
       }
-    }, 700);
+    }, 2000);
   }
 
   async function onGenerateDraft() {

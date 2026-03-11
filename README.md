@@ -149,7 +149,7 @@ Environment variables are documented in `.env.example`:
 - `CRON_SECRET` (recommended for `/api/internal/jobs/run-next` cron auth)
 - `INTERNAL_JOBS_SECRET` (optional manual runner trigger secret)
 - `ACCRETIVE_DB_SCHEMA` (optional, useful for test isolation)
-- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS` (optional, defaults to `10` in production and `0` in development/test; set `0` to disable)
+- `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS` (optional, defaults to `0` in all environments; set a positive value only when you intentionally want DB throttling)
 - `ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS` (optional, defaults to `86400000` = 24h)
 
 LLM generation:
@@ -181,7 +181,7 @@ Migrations:
 Serverless job runner (Vercel):
 
 - Queue worker endpoint: `GET|POST /api/internal/jobs/run-next`
-- Vercel cron is configured in `vercel.json` to call it every minute.
+- Vercel cron is configured in `vercel.json` to call it every 5 minutes.
 - In production, set `CRON_SECRET` (or `INTERNAL_JOBS_SECRET`) so the worker endpoint is authenticated.
 
 Document isolation:
