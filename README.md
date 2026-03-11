@@ -183,6 +183,7 @@ Serverless job runner (Vercel):
 - Queue worker endpoint: `GET|POST /api/internal/jobs/run-next`
 - Vercel cron is configured in `vercel.json` to call it every 5 minutes.
 - In production, set `CRON_SECRET` (or `INTERNAL_JOBS_SECRET`) so the worker endpoint is authenticated.
+- Worker responses now include run stats (`maxJobs`, `startedAt`, `finishedAt`, `durationMs`, `backlog.before/after`, `scanned`, `claimed`, `processed`, `failed`, and `skipped` counters).
 
 Document isolation:
 

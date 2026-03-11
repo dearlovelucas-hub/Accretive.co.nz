@@ -7,6 +7,14 @@ import { processPrecedentJob } from "./precedentPipeline";
 
 export type JobRunnerSummary = {
   source: string;
+  maxJobs: number;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  backlog: {
+    before: number;
+    after: number;
+  };
   scanned: number;
   claimed: number;
   processed: number;
@@ -19,6 +27,7 @@ export type JobRunnerSummary = {
 };
 
 type QueueCandidateRow = { id: string };
+type QueueCountRow = { count: string };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -38,6 +47,17 @@ async function listCandidateJobIds(limit: number): Promise<string[]> {
   return rows.map((row) => row.id);
 }
 
+async function countRunnableJobs(): Promise<number> {
+  const rows = await query<QueueCountRow>(
+    `SELECT COUNT(*)::text AS count
+     FROM jobs
+     WHERE status = 'queued'
+        OR (status = 'processing' AND (lease_expires_at IS NULL OR lease_expires_at < NOW()))`
+  );
+
+  return Number(rows[0]?.count ?? 0);
+}
+
 export async function runQueuedJobs(args?: {
   maxJobs?: number;
   source?: string;
@@ -45,9 +65,20 @@ export async function runQueuedJobs(args?: {
   const maxJobs = clamp(args?.maxJobs ?? 1, 1, 10);
   const source = args?.source ?? "manual";
   const repos = getRepos();
+  const startedAt = new Date().toISOString();
+  const startedAtMs = Date.now();
+  const backlogBefore = await countRunnableJobs();
 
   const summary: JobRunnerSummary = {
     source,
+    maxJobs,
+    startedAt,
+    finishedAt: startedAt,
+    durationMs: 0,
+    backlog: {
+      before: backlogBefore,
+      after: backlogBefore
+    },
     scanned: 0,
     claimed: 0,
     processed: 0,
@@ -135,6 +166,10 @@ export async function runQueuedJobs(args?: {
 
     summary.processed += 1;
   }
+
+  summary.finishedAt = new Date().toISOString();
+  summary.durationMs = Math.max(0, Date.now() - startedAtMs);
+  summary.backlog.after = await countRunnableJobs();
 
   return summary;
 }
