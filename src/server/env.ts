@@ -8,7 +8,18 @@ type AppEnv = {
   DB_RATE_LIMIT_WINDOW_MS: number;
 };
 
+export type ProductionEnvCheckScope = "startup" | "billing-webhook" | "internal-runner";
+
+export type ProductionEnvIssue = {
+  key: string;
+  message: string;
+};
+
 let cachedEnv: AppEnv | null = null;
+
+function isSet(value: string | undefined): boolean {
+  return Boolean(value?.trim());
+}
 
 function isPostgresProtocol(protocol: string): boolean {
   return protocol === "postgres:" || protocol === "postgresql:";
@@ -126,4 +137,33 @@ export function getDatabaseUrl(): string {
 
 export function resetEnvForTests(): void {
   cachedEnv = null;
+}
+
+export function getCriticalProductionEnvIssues(
+  scope: ProductionEnvCheckScope = "startup",
+  env: NodeJS.ProcessEnv = process.env
+): ProductionEnvIssue[] {
+  if (env.NODE_ENV !== "production") {
+    return [];
+  }
+
+  const issues: ProductionEnvIssue[] = [];
+  const checkBilling = scope === "startup" || scope === "billing-webhook";
+  const checkRunner = scope === "startup" || scope === "internal-runner";
+
+  if (checkBilling && !isSet(env.BILLING_WEBHOOK_SECRET)) {
+    issues.push({
+      key: "BILLING_WEBHOOK_SECRET",
+      message: "BILLING_WEBHOOK_SECRET is required in production."
+    });
+  }
+
+  if (checkRunner && !isSet(env.CRON_SECRET) && !isSet(env.INTERNAL_JOBS_SECRET)) {
+    issues.push({
+      key: "CRON_SECRET|INTERNAL_JOBS_SECRET",
+      message: "Either CRON_SECRET or INTERNAL_JOBS_SECRET is required in production."
+    });
+  }
+
+  return issues;
 }

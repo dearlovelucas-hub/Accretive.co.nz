@@ -5,7 +5,6 @@ import { getRepos } from "../../src/server/repos/index.ts";
 import type {
   DocumentRecord,
   DraftOutputRecord,
-  DraftRecord,
   JobRecord,
   MatterRecord,
   TemplateRecord
@@ -25,7 +24,6 @@ type GuardResult<T> = GuardFailure | GuardSuccess<T>;
 type ResourceResultMap = {
   document: DocumentRecord;
   template: TemplateRecord;
-  draft: DraftRecord;
   job: JobRecord;
   matter: MatterRecord;
   draft_output: DraftOutputRecord;
@@ -283,29 +281,6 @@ export async function requireResourceAccess<T extends keyof ResourceResultMap>(
     }
 
     return { ok: true, value: template as ResourceResultMap[T] };
-  }
-
-  if (resourceType === "draft") {
-    const draft = await repos.drafts.getByIdForOrg(resourceId, context.orgId);
-    if (!draft) {
-      return { ok: false, response: notFoundResponse() };
-    }
-
-    if (context.role !== "admin" && draft.ownerUserId !== context.userId) {
-      if (draft) {
-        logDeniedAccess({
-          userId: context.userId,
-          orgId: context.orgId,
-          resourceType,
-          resourceId,
-          action,
-          reason: "draft_owner_mismatch"
-        });
-      }
-      return { ok: false, response: notFoundResponse() };
-    }
-
-    return { ok: true, value: draft as ResourceResultMap[T] };
   }
 
   if (resourceType === "job") {

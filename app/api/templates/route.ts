@@ -1,7 +1,9 @@
+import crypto from "node:crypto";
 import { NextResponse } from "next/server.js";
 import { requireCsrfProtection, requireOrgMembership } from "@/lib/server/authorization";
+import { getStorageProvider, makeTemplateStorageKey } from "@/lib/server/storage";
 import { createTemplate, listTemplatesByOwner } from "@/lib/server/templatesStore";
-import { getRepos } from "@/src/server/repos";
+import { TEMPLATE_UPLOAD_RULE, validateUploadField } from "@/lib/server/uploadGuards";
 
 export const runtime = "nodejs";
 
@@ -26,29 +28,25 @@ export async function POST(request: Request) {
 
   try {
     const form = await request.formData();
-    const templateFile = form.get("templateFile");
-    const name = String(form.get("name") ?? "").trim();
-
-    if (!(templateFile instanceof File)) {
-      return NextResponse.json({ error: "Template file is required." }, { status: 400 });
+    const templateFileValidation = validateUploadField(form, TEMPLATE_UPLOAD_RULE);
+    if (!templateFileValidation.ok) {
+      return NextResponse.json({ error: templateFileValidation.error }, { status: templateFileValidation.status });
     }
-
-    const repos = getRepos();
-    const upload = await repos.uploads.create({
-      ownerUserId: auth.value.userId,
-      purpose: "template",
-      fileName: templateFile.name,
-      fileType: templateFile.type,
-      byteSize: templateFile.size,
-      content: Buffer.from(await templateFile.arrayBuffer())
-    });
+    const templateFile = templateFileValidation.files[0];
+    const name = String(form.get("name") ?? "").trim();
+    const fileBuffer = Buffer.from(await templateFile.arrayBuffer());
+    const sha256 = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+    const storageKey = makeTemplateStorageKey(auth.value.orgId, crypto.randomUUID(), templateFile.name);
+    await getStorageProvider().put(storageKey, fileBuffer);
 
     const record = await createTemplate({
       ownerUserId: auth.value.userId,
       name,
       fileName: templateFile.name,
       fileType: templateFile.type,
-      uploadId: upload.id
+      storageKey,
+      sizeBytes: templateFile.size,
+      sha256
     });
 
     return NextResponse.json({ item: record }, { status: 201 });

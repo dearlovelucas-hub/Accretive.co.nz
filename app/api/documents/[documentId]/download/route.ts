@@ -1,7 +1,5 @@
 import { buildSensitiveHeaders, requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getStorageProvider } from "@/lib/server/storage";
-import { buildDocxFromTemplateWithPreservedFormatting } from "@/lib/server/templateDocxPopulate";
-import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
 
@@ -29,46 +27,12 @@ export async function GET(request: Request, context: { params: Promise<{ documen
     return new Response("Document is not available for download.", { status: 409 });
   }
 
-  const repos = getRepos();
   let fileBuffer: Buffer;
-
-  if (doc.storagePath.startsWith("draft-job:")) {
-    const jobId = doc.storagePath.slice("draft-job:".length);
-    const jobAccess = await requireResourceAccess(auth.value, "job", jobId, "download");
-    if (!jobAccess.ok) {
-      return jobAccess.response;
-    }
-
-    if (jobAccess.value.status !== "complete") {
-      return new Response("Draft output not found.", { status: 404 });
-    }
-
-    const draft = await repos.drafts.getByIdForOrg(jobId, auth.value.orgId);
-    if (!draft || draft.ownerUserId !== auth.value.userId) {
-      return new Response("Draft output not found.", { status: 404 });
-    }
-
-    const uploads = await repos.uploads.listByDraftIdForOrg(jobId, auth.value.orgId);
-    const templateUpload = uploads.find((upload) => upload.purpose === "template");
-    if (!templateUpload) {
-      return new Response("Template upload not found.", { status: 404 });
-    }
-
-    try {
-      fileBuffer = await buildDocxFromTemplateWithPreservedFormatting({
-        templateBuffer: templateUpload.content,
-        generatedOutput: draft.generatedOutput
-      });
-    } catch {
-      return new Response("Unable to prepare DOCX output.", { status: 500 });
-    }
-  } else {
-    const storage = getStorageProvider();
-    try {
-      fileBuffer = await storage.get(doc.storagePath);
-    } catch {
-      return new Response("Output file is temporarily unavailable.", { status: 503 });
-    }
+  const storage = getStorageProvider();
+  try {
+    fileBuffer = await storage.get(doc.storagePath);
+  } catch {
+    return new Response("Output file is temporarily unavailable.", { status: 503 });
   }
 
   return new Response(fileBuffer, {

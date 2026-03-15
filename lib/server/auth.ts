@@ -2,7 +2,7 @@ import * as crypto from "node:crypto";
 import { getEnv } from "../../src/server/env.ts";
 import { getRepos } from "../../src/server/repos/index.ts";
 import type { UserRecord } from "../../src/server/repos/contracts.ts";
-import { ensureSeedData, verifyPassword } from "../../src/server/services/bootstrap.ts";
+import { verifyPassword } from "../../src/server/services/bootstrap.ts";
 
 const AUTH_COOKIE_NAME = "accretive_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
@@ -31,7 +31,6 @@ function signPayload(encodedPayload: string): string {
 }
 
 export async function verifyUserCredentials(username: string, password: string): Promise<UserRecord | null> {
-  await ensureSeedData();
   const repos = getRepos();
   const user = await repos.users.findByUsername(username);
   if (!user) {

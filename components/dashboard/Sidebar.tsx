@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   {
-    href: "/dashboard/drafting",
-    label: "Drafting",
+    href: "/dashboard",
+    label: "Matters",
     icon: (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M12 5v14M5 12h14" />
+        <path d="M6 7h12M6 12h12M6 17h8" />
       </svg>
     )
   },

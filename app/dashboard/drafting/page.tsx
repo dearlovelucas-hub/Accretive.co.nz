@@ -1,5 +1,5 @@
-import DraftingWorkspace from "@/components/dashboard/DraftingWorkspace";
+import { redirect } from "next/navigation";
 
 export default function DraftingPage() {
-  return <DraftingWorkspace />;
+  redirect("/dashboard");
 }

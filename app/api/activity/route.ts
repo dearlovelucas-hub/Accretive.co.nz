@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server.js";
 import { requireOrgMembership } from "@/lib/server/authorization";
+import { buildMatterSummary } from "@/lib/server/matters";
 import { getRepos } from "@/src/server/repos";
 
 type ActivityItem = {
@@ -22,37 +23,56 @@ export async function GET(request: Request) {
   }
 
   const repos = getRepos();
-  const [templates, drafts, documents] = await Promise.all([
+  const [templates, matters, documents] = await Promise.all([
     repos.templates.listByOwner(auth.value.userId),
-    repos.drafts.listByOwner(auth.value.userId),
+    repos.matters.listByOrg(auth.value.orgId),
     repos.documents.listVisibleForUser(auth.value.userId)
   ]);
+  const matterSummaries = await Promise.all(matters.map((matter) => buildMatterSummary(matter, auth.value.orgId, repos)));
 
-  const jobs = await Promise.all(drafts.map((draft) => repos.jobs.getByIdForOrg(draft.id, auth.value.orgId)));
-
-  const draftEvents: ActivityItem[] = drafts
-    .map((draft, index) => {
-      const job = jobs[index];
-      if (!job) {
-        return null;
+  const matterEvents: ActivityItem[] = matterSummaries.flatMap((matter) => {
+    const events: ActivityItem[] = [
+      {
+        id: `matter:${matter.id}`,
+        text: `Matter created: ${matter.title}`,
+        occurredAt: matter.createdAt
       }
+    ];
 
+    if (matter.activePrecedent) {
+      events.push({
+        id: `upload:${matter.activePrecedent.id}`,
+        text: `Precedent attached: ${matter.activePrecedent.filename}`,
+        occurredAt: matter.activePrecedent.createdAt
+      });
+    }
+
+    if (matter.activeTermSheet) {
+      events.push({
+        id: `upload:${matter.activeTermSheet.id}`,
+        text: `Term sheet attached: ${matter.activeTermSheet.filename}`,
+        occurredAt: matter.activeTermSheet.createdAt
+      });
+    }
+
+    if (matter.latestJob) {
       const statusMessage =
-        job.status === "complete"
+        matter.latestJob.status === "complete"
           ? "Draft generated"
-          : job.status === "failed"
+          : matter.latestJob.status === "failed"
             ? "Draft failed"
-            : job.status === "processing"
+            : matter.latestJob.status === "processing"
               ? "Draft processing"
               : "Draft queued";
+      events.push({
+        id: `job:${matter.latestJob.id}`,
+        text: `${statusMessage}: ${matter.title}`,
+        occurredAt: matter.latestJob.updatedAt
+      });
+    }
 
-      return {
-        id: `job:${job.id}`,
-        text: `${statusMessage}: ${draft.templateFileName}`,
-        occurredAt: job.updatedAt
-      } satisfies ActivityItem;
-    })
-    .filter((item): item is ActivityItem => item !== null);
+    return events;
+  });
 
   const templateEvents: ActivityItem[] = templates.map((template) => ({
     id: `template:${template.id}`,
@@ -66,7 +86,7 @@ export async function GET(request: Request) {
     occurredAt: document.createdAt
   }));
 
-  const items = [...draftEvents, ...templateEvents, ...documentEvents]
+  const items = [...matterEvents, ...templateEvents, ...documentEvents]
     .sort((a, b) => toMillis(b.occurredAt) - toMillis(a.occurredAt))
     .slice(0, 25);
 

@@ -5,14 +5,12 @@ import type {
   DocumentsRepo,
   DraftOutputRecord,
   DraftOutputsRepo,
-  DraftRecord,
-  DraftTraceStep,
-  DraftsRepo,
   EntitlementRecord,
   EntitlementsRepo,
   ExtractionCacheRecord,
   ExtractionCacheRepo,
   JobRecord,
+  JobStatus,
   JobsRepo,
   MatterRecord,
   MatterUploadRecord,
@@ -22,8 +20,6 @@ import type {
   OrgsRepo,
   TemplateRecord,
   TemplatesRepo,
-  UploadRecord,
-  UploadsRepo,
   UserRecord,
   UsersRepo
 } from "./contracts.ts";
@@ -66,62 +62,9 @@ function mapTemplate(row: Record<string, unknown>): TemplateRecord {
     name: String(row.name),
     fileName: String(row.file_name),
     fileType: String(row.file_type),
-    uploadId: row.upload_id ? String(row.upload_id) : undefined,
-    createdAt: toIso(row.created_at),
-    updatedAt: toIso(row.updated_at)
-  };
-}
-
-function parseTraceSteps(value: unknown): DraftTraceStep[] | undefined {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  return value
-    .map((item) => {
-      if (!item || typeof item !== "object") {
-        return null;
-      }
-
-      const candidate = item as Record<string, unknown>;
-      if (!candidate.id || !candidate.label || !candidate.content) {
-        return null;
-      }
-
-      return {
-        id: String(candidate.id) as DraftTraceStep["id"],
-        label: String(candidate.label),
-        content: String(candidate.content)
-      } satisfies DraftTraceStep;
-    })
-    .filter((item): item is DraftTraceStep => item !== null);
-}
-
-function mapDraft(row: Record<string, unknown>): DraftRecord {
-  return {
-    id: String(row.id),
-    ownerUserId: String(row.owner_user_id),
-    templateFileName: String(row.template_file_name),
-    transactionFileNames: Array.isArray(row.transaction_file_names)
-      ? row.transaction_file_names.map((value) => String(value))
-      : [],
-    termSheetFileName: row.term_sheet_file_name ? String(row.term_sheet_file_name) : undefined,
-    dealInfo: String(row.deal_info),
-    generatedOutput: String(row.generated_output ?? ""),
-    promptVersion: row.prompt_version ? String(row.prompt_version) : undefined,
-    promptHash: row.prompt_hash ? String(row.prompt_hash) : undefined,
-    promptPreview: row.prompt_preview ? String(row.prompt_preview) : undefined,
-    llmModel: row.llm_model ? String(row.llm_model) : undefined,
-    traceSteps: parseTraceSteps(row.trace_steps),
-    patchPlan: row.patch_plan ?? undefined,
-    unresolved: row.unresolved ?? undefined,
-    modelTrace: row.model_trace ?? undefined,
-    outputDocxTracked:
-      row.output_docx_tracked instanceof Buffer
-        ? row.output_docx_tracked
-        : row.output_docx_tracked
-          ? Buffer.from(row.output_docx_tracked as Uint8Array)
-          : undefined,
+    storageKey: String(row.storage_key),
+    sizeBytes: Number(row.size_bytes),
+    sha256: String(row.sha256),
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
   };
@@ -130,12 +73,11 @@ function mapDraft(row: Record<string, unknown>): DraftRecord {
 function mapJob(row: Record<string, unknown>): JobRecord {
   return {
     id: String(row.id),
-    draftId: row.draft_id ? String(row.draft_id) : "",
     ownerUserId: String(row.owner_user_id),
-    status: String(row.status) as JobRecord["status"],
+    matterId: String(row.matter_id),
+    status: String(row.status) as JobStatus,
     progress: Number(row.progress),
     errorMessage: row.error_message ? String(row.error_message) : undefined,
-    matterId: row.matter_id ? String(row.matter_id) : undefined,
     leasedAt: row.leased_at ? toIso(row.leased_at) : undefined,
     leaseOwner: row.lease_owner ? String(row.lease_owner) : undefined,
     leaseExpiresAt: row.lease_expires_at ? toIso(row.lease_expires_at) : undefined,
@@ -144,21 +86,6 @@ function mapJob(row: Record<string, unknown>): JobRecord {
     lastErrorMessage: row.last_error_message ? String(row.last_error_message) : undefined,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
-  };
-}
-
-function mapUpload(row: Record<string, unknown>): UploadRecord {
-  return {
-    id: String(row.id),
-    ownerUserId: String(row.owner_user_id),
-    draftId: row.draft_id ? String(row.draft_id) : undefined,
-    templateId: row.template_id ? String(row.template_id) : undefined,
-    purpose: String(row.purpose) as UploadRecord["purpose"],
-    fileName: String(row.file_name),
-    fileType: String(row.file_type),
-    byteSize: Number(row.byte_size),
-    content: row.content instanceof Buffer ? row.content : Buffer.from(row.content as Uint8Array),
-    createdAt: toIso(row.created_at)
   };
 }
 
@@ -263,13 +190,24 @@ export class PostgresTemplatesRepo implements TemplatesRepo {
     name: string;
     fileName: string;
     fileType: string;
-    uploadId?: string;
+    storageKey: string;
+    sizeBytes: number;
+    sha256: string;
   }): Promise<TemplateRecord> {
     const result = await query(
-      `INSERT INTO templates (id, owner_user_id, name, file_name, file_type, upload_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO templates (id, owner_user_id, name, file_name, file_type, storage_key, size_bytes, sha256)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [crypto.randomUUID(), input.ownerUserId, input.name, input.fileName, input.fileType, input.uploadId ?? null],
+      [
+        crypto.randomUUID(),
+        input.ownerUserId,
+        input.name,
+        input.fileName,
+        input.fileType,
+        input.storageKey,
+        input.sizeBytes,
+        input.sha256
+      ],
       (row) => mapTemplate(row as Record<string, unknown>)
     );
 
@@ -322,243 +260,26 @@ export class PostgresTemplatesRepo implements TemplatesRepo {
   }
 }
 
-export class PostgresDraftsRepo implements DraftsRepo {
-  async create(input: {
-    id: string;
-    ownerUserId: string;
-    templateFileName: string;
-    transactionFileNames: string[];
-    termSheetFileName?: string;
-    dealInfo: string;
-  }): Promise<DraftRecord> {
-    const result = await query(
-      `INSERT INTO drafts (
-         id,
-         owner_user_id,
-         template_file_name,
-         transaction_file_names,
-         term_sheet_file_name,
-         deal_info,
-         generated_output
-       ) VALUES ($1, $2, $3, $4::text[], $5, $6, $7)
-       RETURNING *`,
-      [
-        input.id,
-        input.ownerUserId,
-        input.templateFileName,
-        input.transactionFileNames,
-        input.termSheetFileName ?? null,
-        input.dealInfo,
-        ""
-      ],
-      (row) => mapDraft(row as Record<string, unknown>)
-    );
-
-    return result[0];
-  }
-
-  async getById(id: string): Promise<DraftRecord | null> {
-    return queryOne(`SELECT * FROM drafts WHERE id = $1 LIMIT 1`, [id], (row) => mapDraft(row as Record<string, unknown>));
-  }
-
-  async getByIdForOrg(id: string, orgId: string): Promise<DraftRecord | null> {
-    return queryOne(
-      `SELECT d.*
-       FROM drafts d
-       JOIN users u ON u.id = d.owner_user_id
-       WHERE d.id = $1
-         AND u.org_id = $2
-       LIMIT 1`,
-      [id, orgId],
-      (row) => mapDraft(row as Record<string, unknown>)
-    );
-  }
-
-  async listByOwner(ownerUserId: string): Promise<DraftRecord[]> {
-    return query(
-      `SELECT * FROM drafts WHERE owner_user_id = $1 ORDER BY updated_at DESC`,
-      [ownerUserId],
-      (row) => mapDraft(row as Record<string, unknown>)
-    );
-  }
-
-  async update(
-    id: string,
-    patch: Partial<
-      Pick<
-        DraftRecord,
-        | "generatedOutput"
-        | "promptVersion"
-        | "promptHash"
-        | "promptPreview"
-        | "llmModel"
-        | "traceSteps"
-        | "patchPlan"
-        | "unresolved"
-        | "modelTrace"
-        | "outputDocxTracked"
-      >
-    >
-  ): Promise<DraftRecord | null> {
-    const existing = await this.getById(id);
-    if (!existing) {
-      return null;
-    }
-
-    const result = await query(
-      `UPDATE drafts
-       SET
-         generated_output = $2,
-         prompt_version = $3,
-         prompt_hash = $4,
-         prompt_preview = $5,
-         llm_model = $6,
-         trace_steps = $7::jsonb,
-         patch_plan = $8::jsonb,
-         unresolved = $9::jsonb,
-         model_trace = $10::jsonb,
-         output_docx_tracked = $11,
-         updated_at = NOW()
-       WHERE id = $1
-       RETURNING *`,
-      [
-        id,
-        patch.generatedOutput ?? existing.generatedOutput,
-        patch.promptVersion ?? existing.promptVersion ?? null,
-        patch.promptHash ?? existing.promptHash ?? null,
-        patch.promptPreview ?? existing.promptPreview ?? null,
-        patch.llmModel ?? existing.llmModel ?? null,
-        JSON.stringify(patch.traceSteps ?? existing.traceSteps ?? null),
-        "patchPlan" in patch
-          ? patch.patchPlan != null ? JSON.stringify(patch.patchPlan) : null
-          : existing.patchPlan != null ? JSON.stringify(existing.patchPlan) : null,
-        "unresolved" in patch
-          ? patch.unresolved != null ? JSON.stringify(patch.unresolved) : null
-          : existing.unresolved != null ? JSON.stringify(existing.unresolved) : null,
-        "modelTrace" in patch
-          ? patch.modelTrace != null ? JSON.stringify(patch.modelTrace) : null
-          : existing.modelTrace != null ? JSON.stringify(existing.modelTrace) : null,
-        "outputDocxTracked" in patch
-          ? (patch.outputDocxTracked ?? null)
-          : (existing.outputDocxTracked ?? null)
-      ],
-      (row) => mapDraft(row as Record<string, unknown>)
-    );
-
-    return result[0] ?? null;
-  }
-}
-
-export class PostgresUploadsRepo implements UploadsRepo {
-  async create(input: {
-    ownerUserId: string;
-    draftId?: string;
-    templateId?: string;
-    purpose: "template" | "transaction" | "term_sheet";
-    fileName: string;
-    fileType: string;
-    byteSize: number;
-    content: Buffer;
-  }): Promise<UploadRecord> {
-    const result = await query(
-      `INSERT INTO uploads (
-         id,
-         owner_user_id,
-         draft_id,
-         template_id,
-         purpose,
-         file_name,
-         file_type,
-         byte_size,
-         content
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
-      [
-        crypto.randomUUID(),
-        input.ownerUserId,
-        input.draftId ?? null,
-        input.templateId ?? null,
-        input.purpose,
-        input.fileName,
-        input.fileType,
-        input.byteSize,
-        input.content
-      ],
-      (row) => mapUpload(row as Record<string, unknown>)
-    );
-
-    return result[0];
-  }
-
-  async listByDraftId(draftId: string): Promise<UploadRecord[]> {
-    return query(
-      `SELECT * FROM uploads WHERE draft_id = $1 ORDER BY created_at ASC`,
-      [draftId],
-      (row) => mapUpload(row as Record<string, unknown>)
-    );
-  }
-
-  async listByDraftIdForOrg(draftId: string, orgId: string): Promise<UploadRecord[]> {
-    return query(
-      `SELECT up.*
-       FROM uploads up
-       JOIN users u ON u.id = up.owner_user_id
-       WHERE up.draft_id = $1
-         AND u.org_id = $2
-       ORDER BY up.created_at ASC`,
-      [draftId, orgId],
-      (row) => mapUpload(row as Record<string, unknown>)
-    );
-  }
-
-  async getByIdForOwner(uploadId: string, ownerUserId: string): Promise<UploadRecord | null> {
-    return queryOne(
-      `SELECT *
-       FROM uploads
-       WHERE id = $1
-         AND owner_user_id = $2
-       LIMIT 1`,
-      [uploadId, ownerUserId],
-      (row) => mapUpload(row as Record<string, unknown>)
-    );
-  }
-
-  async getByIdForOrg(uploadId: string, orgId: string): Promise<UploadRecord | null> {
-    return queryOne(
-      `SELECT up.*
-       FROM uploads up
-       JOIN users u ON u.id = up.owner_user_id
-       WHERE up.id = $1
-         AND u.org_id = $2
-       LIMIT 1`,
-      [uploadId, orgId],
-      (row) => mapUpload(row as Record<string, unknown>)
-    );
-  }
-}
-
 export class PostgresJobsRepo implements JobsRepo {
   async create(input: {
     id: string;
-    draftId?: string;
     ownerUserId: string;
-    status: JobRecord["status"];
+    matterId: string;
+    status: JobStatus;
     progress: number;
     errorMessage?: string;
-    matterId?: string;
   }): Promise<JobRecord> {
     const result = await query(
-      `INSERT INTO jobs (id, draft_id, owner_user_id, status, progress, error_message, matter_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO jobs (id, owner_user_id, status, progress, error_message, matter_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
         input.id,
-        input.draftId ?? null,
         input.ownerUserId,
         input.status,
         input.progress,
         input.errorMessage ?? null,
-        input.matterId ?? null
+        input.matterId
       ],
       (row) => mapJob(row as Record<string, unknown>)
     );
@@ -894,6 +615,7 @@ function mapMatterUpload(row: Record<string, unknown>): MatterUploadRecord {
     sha256: String(row.sha256),
     storageKey: String(row.storage_key),
     retained: Boolean(row.retained),
+    sourceTemplateId: row.source_template_id ? String(row.source_template_id) : undefined,
     createdAt: toIso(row.created_at)
   };
 }
@@ -969,11 +691,12 @@ export class PostgresMatterUploadsRepo implements MatterUploadsRepo {
     sha256: string;
     storageKey: string;
     retained?: boolean;
+    sourceTemplateId?: string;
   }): Promise<MatterUploadRecord> {
     const result = await query(
       `INSERT INTO matter_uploads
-         (id, matter_id, org_id, user_id, kind, filename, mime_type, size_bytes, sha256, storage_key, retained)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         (id, matter_id, org_id, user_id, kind, filename, mime_type, size_bytes, sha256, storage_key, retained, source_template_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
       [
         input.id,
@@ -986,7 +709,8 @@ export class PostgresMatterUploadsRepo implements MatterUploadsRepo {
         input.sizeBytes,
         input.sha256,
         input.storageKey,
-        input.retained ?? true
+        input.retained ?? true,
+        input.sourceTemplateId ?? null
       ],
       (row) => mapMatterUpload(row as Record<string, unknown>)
     );

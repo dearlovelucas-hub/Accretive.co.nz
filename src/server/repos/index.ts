@@ -3,7 +3,6 @@ import { getEnv } from "../env.ts";
 import type {
   DocumentsRepo,
   DraftOutputsRepo,
-  DraftsRepo,
   EntitlementsRepo,
   ExtractionCacheRepo,
   JobsRepo,
@@ -11,13 +10,11 @@ import type {
   MattersRepo,
   OrgsRepo,
   TemplatesRepo,
-  UploadsRepo,
   UsersRepo
 } from "./contracts.ts";
 import {
   PostgresDocumentsRepo,
   PostgresDraftOutputsRepo,
-  PostgresDraftsRepo,
   PostgresEntitlementsRepo,
   PostgresExtractionCacheRepo,
   PostgresJobsRepo,
@@ -25,7 +22,6 @@ import {
   PostgresMattersRepo,
   PostgresOrgsRepo,
   PostgresTemplatesRepo,
-  PostgresUploadsRepo,
   PostgresUsersRepo
 } from "./postgres.ts";
 
@@ -33,8 +29,6 @@ export type Repos = {
   users: UsersRepo;
   orgs: OrgsRepo;
   templates: TemplatesRepo;
-  drafts: DraftsRepo;
-  uploads: UploadsRepo;
   jobs: JobsRepo;
   entitlements: EntitlementsRepo;
   documents: DocumentsRepo;
@@ -54,8 +48,6 @@ export function getRepos(): Repos {
       users: new PostgresUsersRepo(),
       orgs: new PostgresOrgsRepo(),
       templates: new PostgresTemplatesRepo(),
-      drafts: new PostgresDraftsRepo(),
-      uploads: new PostgresUploadsRepo(),
       jobs: new PostgresJobsRepo(),
       entitlements: new PostgresEntitlementsRepo(),
       documents: new PostgresDocumentsRepo(),
@@ -82,9 +74,7 @@ export async function truncateAllTablesForTests(): Promise<void> {
       draft_outputs,
       matter_uploads,
       matters,
-      uploads,
       jobs,
-      drafts,
       templates,
       subscriptions,
       users,

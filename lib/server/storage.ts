@@ -22,6 +22,11 @@ export function makeStorageKey(
   return `${orgId}/matters/${matterId}/${kind}/${safeFilename}`;
 }
 
+export function makeTemplateStorageKey(orgId: string, templateId: string, filename: string): string {
+  const safeFilename = path.basename(filename);
+  return `${orgId}/templates/${templateId}/${safeFilename}`;
+}
+
 export class LocalDiskStorageProvider implements StorageProvider {
   private readonly basePath: string;
 
@@ -104,8 +109,7 @@ function resolveStorageProviderKind(): "disk" | "database" {
     return "database";
   }
 
-  // Vercel/serverless default: avoid ephemeral filesystem for persistent artifacts.
-  return process.env.NODE_ENV === "production" ? "database" : "disk";
+  return "database";
 }
 
 export function getStorageProvider(): StorageProvider {

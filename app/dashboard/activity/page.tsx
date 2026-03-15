@@ -86,7 +86,7 @@ export default function ActivityPage() {
       <div>
         <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
         <h1 className="text-2xl font-semibold text-[#10243F]">Activity</h1>
-        <p className="mt-2 text-sm text-slate-700">Recent drafting and workspace events.</p>
+        <p className="mt-2 text-sm text-slate-700">Recent matter, template, and generated-output events.</p>
       </div>
 
       {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -95,7 +95,7 @@ export default function ActivityPage() {
         <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">Loading activity...</p>
       ) : items.length === 0 ? (
         <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">
-          No activity yet. Start drafting or upload a template to see events here.
+          No activity yet. Create a matter, attach inputs, or upload a template to see events here.
         </p>
       ) : (
         <ul className="space-y-3">

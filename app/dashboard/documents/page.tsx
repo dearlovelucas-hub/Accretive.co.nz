@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 
 type DocumentItem = {
   id: string;
-  name: string;
-  templateFileName: string;
+  title: string;
+  docType: string;
   status: string;
-  updatedAt: string;
+  createdAt: string;
 };
 
 function parseFilenameFromDisposition(disposition: string | null): string | null {
@@ -69,20 +69,21 @@ export default function DocumentsPage() {
       setDownloadError("");
       setActiveDownloadId(item.id);
 
-      const response = await fetch(`/api/draft-jobs/${encodeURIComponent(item.id)}/download`, {
+      const response = await fetch(`/api/documents/${encodeURIComponent(item.id)}/download`, {
         credentials: "include"
       });
 
       if (!response.ok) {
         const fallback = "Unable to download this document right now.";
-        const message = (await response.text().catch(() => fallback)) || fallback;
+        const maybeJson = (await response.json().catch(() => null)) as { error?: string } | null;
+        const message = maybeJson?.error ?? fallback;
         throw new Error(message);
       }
 
       const blob = await response.blob();
       const fileName =
         parseFilenameFromDisposition(response.headers.get("Content-Disposition")) ??
-        `${item.name.replace(/[\\/:*?"<>|]+/g, " ").trim() || "document"}.docx`;
+        `${item.title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "document"}.docx`;
 
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
@@ -104,7 +105,7 @@ export default function DocumentsPage() {
       <div>
         <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
         <h1 className="text-2xl font-semibold text-[#10243F]">My documents</h1>
-        <p className="mt-2 text-sm text-slate-700">Generated drafts and work in progress.</p>
+        <p className="mt-2 text-sm text-slate-700">Generated matter outputs available to you.</p>
       </div>
 
       {error && <p className="rounded-panel border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -114,7 +115,7 @@ export default function DocumentsPage() {
         <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">Loading documents...</p>
       ) : items.length === 0 ? (
         <p className="rounded-panel border border-[#d7e4fb] bg-[#f8fbff] p-4 text-sm text-slate-600">
-          No documents yet. Generate your first draft in Drafting.
+          No documents yet. Run drafting on a matter to create the first output.
         </p>
       ) : (
         <div className="overflow-hidden rounded-panel border border-[#d7e4fb] bg-white shadow-[0_10px_24px_rgba(16,36,63,0.08)]">
@@ -122,24 +123,24 @@ export default function DocumentsPage() {
             <thead className="bg-[#f4f8ff] text-left text-slate-700">
               <tr>
                 <th className="px-4 py-3 font-medium">Document</th>
-                <th className="px-4 py-3 font-medium">Template</th>
+                <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Updated</th>
+                <th className="px-4 py-3 font-medium">Created</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e6eefb] bg-white text-slate-800">
               {items.map((doc) => (
                 <tr key={doc.id} className="hover:bg-[#f8fbff]">
-                  <td className="px-4 py-3">{doc.name}</td>
-                  <td className="px-4 py-3">{doc.templateFileName}</td>
+                  <td className="px-4 py-3">{doc.title}</td>
+                  <td className="px-4 py-3">{doc.docType}</td>
                   <td className="px-4 py-3 capitalize">{doc.status}</td>
-                  <td className="px-4 py-3">{new Date(doc.updatedAt).toLocaleString()}</td>
+                  <td className="px-4 py-3">{new Date(doc.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <button
                       type="button"
                       onClick={() => void onDownloadDocument(doc)}
-                      disabled={doc.status !== "complete" || activeDownloadId === doc.id}
+                      disabled={doc.status !== "generated" || activeDownloadId === doc.id}
                       className="rounded-full border border-[#10243F] px-3 py-1.5 text-xs text-[#10243F] transition hover:bg-[#eef4ff] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {activeDownloadId === doc.id ? "Downloading..." : "Download DOCX"}

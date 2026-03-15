@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import MatterWorkspace from "@/components/dashboard/MatterWorkspace";
 
 export default function DashboardIndexPage() {
-  redirect("/dashboard/drafting");
+  return <MatterWorkspace />;
 }

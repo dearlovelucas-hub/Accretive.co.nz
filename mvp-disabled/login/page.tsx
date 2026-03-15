@@ -76,7 +76,7 @@ export default function LoginPage() {
       setCurrentUser(body.user);
       setPassword("");
       setSuccessMessage(`Welcome, ${body.user.displayName}. You are now logged in.`);
-      window.location.assign("/dashboard/drafting");
+      window.location.assign("/dashboard");
     } catch {
       setErrorMessage("Network error. Please try again.");
     } finally {

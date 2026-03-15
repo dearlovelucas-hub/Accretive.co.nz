@@ -89,23 +89,23 @@ async function seedUsers(): Promise<void> {
   });
 }
 
-async function seedCompletedDraftJobForUserA(): Promise<{ jobId: string; storageKey: string }> {
+async function seedCompletedMatterJobForUserA(): Promise<{ jobId: string; storageKey: string }> {
   const repos = getRepos();
   const jobId = crypto.randomUUID();
+  const matterId = crypto.randomUUID();
   const storageKey = `org_a/matters/matter-a/OUTPUT/${jobId}.docx`;
 
-  await repos.drafts.create({
-    id: jobId,
-    ownerUserId: USERS.memberA.id,
-    templateFileName: "template-a.docx",
-    transactionFileNames: ["tx-a.pdf"],
-    dealInfo: "Test matter A"
+  await repos.matters.create({
+    id: matterId,
+    orgId: USERS.memberA.orgId,
+    userId: USERS.memberA.id,
+    title: "Test matter A"
   });
 
   await repos.jobs.create({
     id: jobId,
-    draftId: jobId,
     ownerUserId: USERS.memberA.id,
+    matterId,
     status: "complete",
     progress: 100
   });
@@ -167,7 +167,7 @@ test("user from org B cannot access org A document by changing ID", async () => 
 });
 
 test("user from org B cannot download org A generated output", async () => {
-  const { jobId, storageKey } = await seedCompletedDraftJobForUserA();
+  const { jobId, storageKey } = await seedCompletedMatterJobForUserA();
 
   const memberB = await membershipFor(USERS.memberB);
   const access = await requireResourceAccess(memberB, "draft_output", jobId, "download");
@@ -189,8 +189,8 @@ test("member cannot perform admin-only action", async () => {
   }
 });
 
-test("unauthorized or cross-tenant callers are blocked for trace/comparison/unresolved resource checks", async () => {
-  const { jobId } = await seedCompletedDraftJobForUserA();
+test("unauthorized or cross-tenant callers are blocked for job and output resource checks", async () => {
+  const { jobId } = await seedCompletedMatterJobForUserA();
 
   const noSession = requireSession(buildRequest());
   assert.equal(noSession.ok, false);
@@ -206,10 +206,10 @@ test("unauthorized or cross-tenant callers are blocked for trace/comparison/unre
     assert.equal(traceAccess.response.status, 404);
   }
 
-  const unresolvedAccess = await requireResourceAccess(memberB, "draft", jobId, "read");
-  assert.equal(unresolvedAccess.ok, false);
-  if (!unresolvedAccess.ok) {
-    assert.equal(unresolvedAccess.response.status, 404);
+  const outputAccess = await requireResourceAccess(memberB, "draft_output", jobId, "read");
+  assert.equal(outputAccess.ok, false);
+  if (!outputAccess.ok) {
+    assert.equal(outputAccess.response.status, 404);
   }
 });
 
@@ -235,4 +235,3 @@ test("bare-ID access with invalid/empty ID is rejected by centralized authz guar
     assert.equal(access.response.status, 404);
   }
 });
-

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server.js";
 import { requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
-import { getRepos } from "@/src/server/repos";
+import { getStorageProvider } from "@/lib/server/storage";
 
 const MAX_PREVIEW_CHARS = 12000;
 
@@ -56,26 +56,22 @@ export async function GET(request: Request, context: { params: Promise<{ templat
     return access.response;
   }
 
-  const repos = getRepos();
-
   const template = access.value;
-  if (!template.uploadId) {
-    return NextResponse.json({ error: "Template not found." }, { status: 404 });
-  }
-
-  const upload = await repos.uploads.getByIdForOrg(template.uploadId, auth.value.orgId);
-  if (!upload || upload.ownerUserId !== auth.value.userId) {
+  let content: Buffer;
+  try {
+    content = await getStorageProvider().get(template.storageKey);
+  } catch {
     return NextResponse.json({ error: "Template source file is unavailable." }, { status: 404 });
   }
 
   try {
-    const previewText = await extractPreviewText(template.fileName || upload.fileName, template.fileType || upload.fileType, upload.content);
+    const previewText = await extractPreviewText(template.fileName, template.fileType, content);
 
     return NextResponse.json(
       {
         template: {
           id: template.id,
-          name: template.name || template.fileName,
+          name: template.name,
           fileName: template.fileName,
           fileType: template.fileType
         },
@@ -91,7 +87,7 @@ export async function GET(request: Request, context: { params: Promise<{ templat
       {
         template: {
           id: template.id,
-          name: template.name || template.fileName,
+          name: template.name,
           fileName: template.fileName,
           fileType: template.fileType
         },

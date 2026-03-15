@@ -136,9 +136,9 @@ export default function TemplatesPage() {
     setPreviewError("");
   }
 
-  function onUseTemplateForDrafting(templateId: string) {
+  function onUseTemplateForMatter(templateId: string) {
     closePreview();
-    router.push(`/dashboard/drafting?templateId=${encodeURIComponent(templateId)}`);
+    router.push(`/dashboard?templateId=${encodeURIComponent(templateId)}`);
   }
 
   return (
@@ -147,7 +147,7 @@ export default function TemplatesPage() {
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-[#355f95]">Workspace</p>
           <h1 className="text-2xl font-semibold text-[#10243F]">Templates</h1>
-          <p className="mt-2 text-sm text-slate-700">Manage approved drafting templates used by your team.</p>
+          <p className="mt-2 text-sm text-slate-700">Manage reusable precedents that can be attached to matters.</p>
         </div>
 
         <button
@@ -196,7 +196,7 @@ export default function TemplatesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1220]/45 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-panel border border-[#d7e4fb] bg-white p-6 shadow-panel">
             <h3 className="text-lg font-semibold text-[#10243F]">Add new template</h3>
-            <p className="mt-1 text-sm text-slate-700">Upload a DOCX or PDF to use as a base template.</p>
+            <p className="mt-1 text-sm text-slate-700">Upload a DOCX or PDF precedent that can be reused across matters.</p>
 
             <form onSubmit={onCreateTemplate} className="mt-5 space-y-4">
               <label className="block">
@@ -272,10 +272,10 @@ export default function TemplatesPage() {
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => onUseTemplateForDrafting(previewTemplate.id)}
+                onClick={() => onUseTemplateForMatter(previewTemplate.id)}
                 className="rounded-full border border-[#10243F] bg-[#10243F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0d1d33]"
               >
-                Use this template in Drafting
+                Use this template on a matter
               </button>
               <p className="text-xs text-slate-600">
                 Drafting will open with this template preloaded. You can then upload transaction documents.

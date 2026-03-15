@@ -1,9 +1,23 @@
 import * as crypto from "node:crypto";
 import { NextResponse } from "next/server.js";
 import { requireCsrfProtection, requireOrgMembership } from "@/lib/server/authorization";
+import { buildMatterSummary } from "@/lib/server/matters";
 import { getRepos } from "@/src/server/repos";
 
 export const runtime = "nodejs";
+
+export async function GET(request: Request) {
+  const auth = await requireOrgMembership(request);
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  const repos = getRepos();
+  const matters = await repos.matters.listByOrg(auth.value.orgId);
+  const items = await Promise.all(matters.map((matter) => buildMatterSummary(matter, auth.value.orgId, repos)));
+
+  return NextResponse.json({ items }, { status: 200 });
+}
 
 export async function POST(request: Request) {
   const auth = await requireOrgMembership(request);

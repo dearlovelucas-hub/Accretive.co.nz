@@ -1,5 +1,5 @@
 import { buildSensitiveHeaders, requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
-import { getRepos } from "@/src/server/repos";
+import { getStorageProvider } from "@/lib/server/storage";
 
 export const runtime = "nodejs";
 
@@ -20,22 +20,18 @@ export async function GET(request: Request, context: { params: Promise<{ templat
     return access.response;
   }
 
-  const repos = getRepos();
   const template = access.value;
+  const fileName = toSafeFilename(template.fileName);
+  const fileType = template.fileType || "application/octet-stream";
 
-  if (!template.uploadId) {
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = await getStorageProvider().get(template.storageKey);
+  } catch {
     return new Response("Template source file is unavailable.", { status: 404 });
   }
 
-  const upload = await repos.uploads.getByIdForOrg(template.uploadId, auth.value.orgId);
-  if (!upload || upload.ownerUserId !== auth.value.userId) {
-    return new Response("Template source file is unavailable.", { status: 404 });
-  }
-
-  const fileName = toSafeFilename(template.fileName || upload.fileName);
-  const fileType = template.fileType || upload.fileType || "application/octet-stream";
-
-  return new Response(upload.content, {
+  return new Response(fileBuffer, {
     status: 200,
     headers: buildSensitiveHeaders({
       "Content-Type": fileType,

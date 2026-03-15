@@ -3,7 +3,6 @@ export type AuthRole = "admin" | "member";
 export type ResourceType =
   | "document"
   | "template"
-  | "draft"
   | "job"
   | "matter"
   | "draft_output"
@@ -25,12 +24,6 @@ const POLICY: Record<ResourceType, Record<ResourceAction, readonly AuthRole[]>> 
     write: ["member", "admin"],
     download: ["member", "admin"],
     run: ["admin"]
-  },
-  draft: {
-    read: ["member", "admin"],
-    write: ["member", "admin"],
-    download: ["member", "admin"],
-    run: ["member", "admin"]
   },
   job: {
     read: ["member", "admin"],
@@ -74,4 +67,3 @@ export function isRoleAllowed(resource: ResourceType, action: ResourceAction, ro
   const allowed = POLICY[resource]?.[action] ?? [];
   return allowed.includes(role);
 }
-

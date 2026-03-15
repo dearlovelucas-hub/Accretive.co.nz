@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server.js";
 import { setSubscriptionForUser } from "@/lib/server/subscriptions";
+import { validateBillingWebhookAuth } from "@/lib/server/billingWebhookAuth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const signature = request.headers.get("x-billing-signature");
-  const expected = process.env.BILLING_WEBHOOK_SECRET;
-
-  if (expected && signature !== expected) {
-    return NextResponse.json({ error: "Invalid webhook signature." }, { status: 401 });
+  const auth = validateBillingWebhookAuth(request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error, code: auth.code }, { status: auth.status });
   }
 
   const event = (await request.json().catch(() => null)) as

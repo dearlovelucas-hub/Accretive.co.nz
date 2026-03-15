@@ -1,5 +1,4 @@
 import { getRepos } from "../../src/server/repos/index.ts";
-import { ensureSeedData } from "../../src/server/services/bootstrap.ts";
 
 export type TemplateRecord = {
   id: string;
@@ -21,13 +20,14 @@ export async function createTemplate(input: {
   name: string;
   fileName: string;
   fileType: string;
-  uploadId?: string;
+  storageKey: string;
+  sizeBytes: number;
+  sha256: string;
 }): Promise<TemplateRecord> {
   if (!isAllowedTemplateFile(input.fileName)) {
     throw new Error("Template file must be DOCX or PDF.");
   }
 
-  await ensureSeedData();
   const repos = getRepos();
 
   const record = await repos.templates.create({
@@ -35,7 +35,9 @@ export async function createTemplate(input: {
     name: input.name.trim() || input.fileName,
     fileName: input.fileName,
     fileType: input.fileType,
-    uploadId: input.uploadId
+    storageKey: input.storageKey,
+    sizeBytes: input.sizeBytes,
+    sha256: input.sha256
   });
 
   return {
@@ -50,7 +52,6 @@ export async function createTemplate(input: {
 }
 
 export async function listTemplatesByOwner(ownerUserId: string): Promise<TemplateRecord[]> {
-  await ensureSeedData();
   const repos = getRepos();
   const records = await repos.templates.listByOwner(ownerUserId);
 

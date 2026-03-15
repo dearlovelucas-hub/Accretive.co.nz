@@ -1,5 +1,4 @@
 import { getRepos } from "../../src/server/repos/index.ts";
-import { ensureSeedData } from "../../src/server/services/bootstrap.ts";
 
 export type SubscriptionRecord = {
   userId: string;
@@ -11,7 +10,6 @@ export type SubscriptionRecord = {
 };
 
 export async function getEntitlement(userId: string): Promise<{ active: boolean; plan: string; expiresAt?: string }> {
-  await ensureSeedData();
   const repos = getRepos();
   const record = await repos.entitlements.getByUserId(userId);
 
@@ -33,7 +31,6 @@ export async function setSubscriptionForUser(
   userId: string,
   input: Omit<SubscriptionRecord, "userId">
 ): Promise<SubscriptionRecord> {
-  await ensureSeedData();
   const repos = getRepos();
   const next = await repos.entitlements.upsertByUserId(userId, {
     plan: input.plan,
@@ -54,7 +51,6 @@ export async function setSubscriptionForUser(
 }
 
 export async function getSubscriptionForUser(userId: string): Promise<SubscriptionRecord | null> {
-  await ensureSeedData();
   const repos = getRepos();
   const record = await repos.entitlements.getByUserId(userId);
   if (!record) {

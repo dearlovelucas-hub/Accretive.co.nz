@@ -43,6 +43,7 @@ Route handlers are implemented with Next.js App Router APIs:
 - `POST /api/auth/logout` clears session cookie
 - `POST /api/billing/create-checkout-session` creates billing checkout URL (stub or provider integration point)
 - `POST /api/billing/webhook` updates subscription state from billing events
+- `GET /api/internal/config-check` validates critical production secret configuration
 
 Draft generation requires at least one transaction document server-side; optional term sheet is supported.
 
@@ -50,7 +51,7 @@ Entitlement helper:
 
 - `getEntitlement(userId) -> { active, plan, expiresAt? }` in `lib/server/subscriptions.ts`
 
-Demo login account:
+Demo login account (seeded by explicit command):
 
 - Username: `Lucas`
 - Password: `accretive123`
@@ -76,19 +77,25 @@ createdb accretive_test
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/accretive_dev npm run db:migrate
 ```
 
-4. Start development server:
+4. Seed local demo users (dev/test only):
+
+```bash
+npm run db:seed-demo
+```
+
+5. Start development server:
 
 ```bash
 npm run dev
 ```
 
-5. Open:
+6. Open:
 
 ```text
 http://localhost:3000
 ```
 
-6. Run tests:
+7. Run tests:
 
 ```bash
 DATABASE_URL_TEST=postgres://postgres:postgres@localhost:5432/accretive_test npm run test
@@ -99,6 +106,16 @@ Or if `DATABASE_URL_TEST` is already in your environment:
 ```bash
 npm run test
 ```
+
+8. Run tests against a Vercel/Neon test branch database:
+
+```bash
+cp env.test-branch.example .env.test-branch
+# set DATABASE_URL_TEST in .env.test-branch to your dedicated test branch
+npm run test:vercel-db
+```
+
+Use a dedicated test branch/database for this command. The test harness truncates core tables between test cases.
 
 ## Build for production
 
@@ -151,6 +168,8 @@ Environment variables are documented in `.env.example`:
 - `ACCRETIVE_DB_SCHEMA` (optional, useful for test isolation)
 - `ACCRETIVE_DB_RATE_LIMIT_MAX_REQUESTS` (optional, defaults to `0` in all environments; set a positive value only when you intentionally want DB throttling)
 - `ACCRETIVE_DB_RATE_LIMIT_WINDOW_MS` (optional, defaults to `86400000` = 24h)
+- `LOGIN_RATE_LIMIT_MAX_ATTEMPTS` (optional, defaults to `5`)
+- `LOGIN_RATE_LIMIT_WINDOW_MS` (optional, defaults to `600000` = 10m)
 
 LLM generation:
 
@@ -182,11 +201,14 @@ Serverless job runner (Vercel):
 
 - Queue worker endpoint: `GET|POST /api/internal/jobs/run-next`
 - Vercel cron is configured in `vercel.json` to call it every 5 minutes.
-- In production, set `CRON_SECRET` (or `INTERNAL_JOBS_SECRET`) so the worker endpoint is authenticated.
+- In production, set `CRON_SECRET` and/or `INTERNAL_JOBS_SECRET`; missing both returns `500` misconfiguration.
+- Auth contract:
+  - `Authorization: Bearer $CRON_SECRET` or
+  - `x-internal-jobs-secret: $INTERNAL_JOBS_SECRET`
 - Worker responses now include run stats (`maxJobs`, `startedAt`, `finishedAt`, `durationMs`, `backlog.before/after`, `scanned`, `claimed`, `processed`, `failed`, and `skipped` counters).
+- Worker logs include structured run events with `runId`, request source, timing, claim/processing outcomes, and failure paths.
 
 Document isolation:
 
 - Document table access is restricted by PostgreSQL RLS policies in migration `0005`.
 - Document queries should run through `withDocumentSession(userId, orgId, fn)` in `src/server/db/index.ts`.
-# Accretive

@@ -3,11 +3,15 @@ import { NextResponse } from "next/server.js";
 import { requireCsrfProtection, requireOrgMembership, requireResourceAccess } from "@/lib/server/authorization";
 import { getRepos } from "@/src/server/repos";
 import { getStorageProvider, makeStorageKey } from "@/lib/server/storage";
+import {
+  MATTER_PRECEDENT_UPLOAD_RULE,
+  MATTER_TERMSHEET_UPLOAD_RULE,
+  validateUploadField
+} from "@/lib/server/uploadGuards";
 
 export const runtime = "nodejs";
 
 const ALLOWED_KINDS = new Set(["PRECEDENT", "TERMSHEET"]);
-const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
 export async function POST(request: Request, { params }: { params: Promise<{ matterId: string }> }) {
   const auth = await requireOrgMembership(request);
@@ -38,23 +42,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ mat
     return NextResponse.json({ error: "Invalid multipart form data." }, { status: 400 });
   }
 
-  const file = form.get("file");
   const kindRaw = String(form.get("kind") ?? "").trim().toUpperCase();
   const retainedRaw = form.get("retained");
   const retained = retainedRaw !== null ? retainedRaw !== "false" : true;
-
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "file is required." }, { status: 400 });
-  }
 
   if (!ALLOWED_KINDS.has(kindRaw)) {
     return NextResponse.json({ error: "kind must be PRECEDENT or TERMSHEET." }, { status: 400 });
   }
 
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "File exceeds maximum size of 50 MB." }, { status: 413 });
+  const fileValidation = validateUploadField(
+    form,
+    kindRaw === "PRECEDENT" ? MATTER_PRECEDENT_UPLOAD_RULE : MATTER_TERMSHEET_UPLOAD_RULE
+  );
+  if (!fileValidation.ok) {
+    return NextResponse.json({ error: fileValidation.error }, { status: fileValidation.status });
   }
 
+  const file = fileValidation.files[0];
   const kind = kindRaw as "PRECEDENT" | "TERMSHEET";
   const buffer = Buffer.from(await file.arrayBuffer());
   const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");

@@ -43,6 +43,10 @@ export function verifyPassword(password: string, expectedHash: string): boolean 
 let initialized = false;
 
 export async function ensureSeedData(): Promise<void> {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Demo seed command is disabled in production.");
+  }
+
   if (initialized) {
     return;
   }

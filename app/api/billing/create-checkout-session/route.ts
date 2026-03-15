@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        checkoutUrl: "/dashboard/drafting?upgraded=1",
+        checkoutUrl: "/dashboard?upgraded=1",
         mode: "stub",
         paymentMethod
       },

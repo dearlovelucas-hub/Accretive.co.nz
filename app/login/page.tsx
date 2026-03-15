@@ -78,7 +78,7 @@ export default function LoginPage() {
       setCurrentUser(body.user);
       setPassword("");
       setSuccessMessage(`Welcome, ${body.user.displayName}. You are now logged in.`);
-      window.setTimeout(() => router.push("/dashboard/drafting"), 900);
+      window.setTimeout(() => router.push("/dashboard"), 900);
     } catch {
       setErrorMessage("Network error. Please try again.");
     } finally {
